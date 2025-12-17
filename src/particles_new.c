@@ -14,14 +14,14 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "particles.h"
+#include "../lib/particles.h"
 
-#include "random.h"
-#include "emf.h"
-#include "current.h"
+#include "../lib/random.h"
+#include "../lib/emf.h"
+#include "../lib/current.h"
 
-#include "zdf.h"
-#include "timer.h"
+#include "../lib/zdf.h"
+#include "../lib/timer.h"
 
 static double _spec_time = 0.0;
 static uint64_t _spec_npush = 0;

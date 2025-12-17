@@ -1,21 +1,54 @@
 /**
- * @brief  This file is about the eletric current density
- * @authors Tomás Pereira, Diogo Silva
-*/
+ * @file current.c
+ * @author Ricardo Fonseca
+ * @brief Electric current density
+ * @version 0.2
+ * @date 2022-02-04
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
+#include "../lib/current.h"
+#include "../lib/zdf.h"
 
-// Standard libraries
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 
-// Libraries from the project
-#include "zdf.h"
-#include "current.h"
+#define GUARD_CELLS_R 2
+#define GUARD_CELLS_L 1
 
-// Guard cells 
-#define GUARD_CELLS_TOP 2
-#define GUARD_CELLS_BOT 1
+/** 
+static float3Buffer tmp;
+static int is_allocated = 0;
+
+
+void kernel_tmpbuf_init(int nx){
+    if (!is_allocated){
+        alloc_float3Buffer(&tmp, nx);
+        is_allocated= 1;
+    }
+}
+
+
+void kernel_tmpbuf_cleanup() {
+    if (is_allocated) {
+        free_float3Buffer(&tmp);
+        is_allocated = 0;
+    }
+}
+
+float3Buffer* kernel_tmpbuf_get(t_current* current) {
+    
+    // Allocate temporary buffer if not allocated
+    if (!is_allocated){
+        kernel_tmpbuf_init(current->nx);
+    }
+
+    return &tmp;
+}
+*/
 
 /**
  * @brief Initializes Electric current density object
@@ -25,33 +58,33 @@
  * @param box       Physical box size
  * @param dt        Simulation time step
  */
-void current_new(t_current *current, int nx, float box, float dt){
+void current_new(t_current *current, int nx, float box, float dt)
+{
+    // Number of guard cells
+    int gc[2] = {GUARD_CELLS_L, GUARD_CELLS_R}; 
     
-    // Number of guard cells for linear interpolation
-    int gc[2] = {GUARD_CELLS_BOT,GUARD_CELLS_TOP}; 
-    
-    // Allocate global array
+    // Size = guard cells (L and R) + grid cells
     size_t size;
-    
     size = gc[0] + nx + gc[1];
     
-    current->J_buf = malloc(size * sizeof(float3));
-    assert(current->J_buf);
+    // Allocate buffer for SoA J_buf
+    allocate_float3vc_buffer(&current->J_buf, size);
 
-    // store nx and gc values
-    current->nx = nx;
-    current->gc[0] = gc[0];
-    current->gc[1] = gc[1];
+    current->nx = nx; // Number of grid cells
+    current->gc[0] = gc[0];  // Number of guard cells (lower)
+    current->gc[1] = gc[1];  // Number of guard cells (upper)
     
-    // Make J point to cell [0]
-    current->J = current->J_buf + gc[0];
+    // Make J point to grid cell [0]
+    current->J.x = current->J_buf.x + gc[0];
+    current->J.y = current->J_buf.y + gc[0];
+    current->J.z = current->J_buf.z + gc[0];
     
     // Set cell sizes and box limits
     current -> box = box;
     current -> dx  = box / nx;
 
     // Clear smoothing options
-    current -> smooth = (t_smooth){
+    current -> smooth = (t_smooth) {
         .xtype = NONE,
         .xlevel = 0
     };
@@ -71,12 +104,23 @@ void current_new(t_current *current, int nx, float box, float dt){
 
 /**
  * @brief Frees dynamic memory from electric current density
- * 
+ * @brief 
  * @param current   Electric current density
  */
-void current_delete(t_current *current ){
-    free(current->J_buf);
-    current->J_buf = NULL;
+void current_delete( t_current *current ){   
+
+    // Free current density buffer
+    free(current->J_buf.x);
+    free(current->J_buf.y);
+    free(current->J_buf.z);
+    
+    current->J_buf.x = NULL;
+    current->J_buf.y = NULL;
+    current->J_buf.z = NULL;
+
+    current->J.x = NULL;
+    current->J.y = NULL;
+    current->J.z = NULL;
     
 }
 
@@ -85,13 +129,8 @@ void current_delete(t_current *current ){
  * 
  * @param current   Electric current density
  */
-void current_zero(t_current *current){
-    
-    // zero fields
-    size_t size;
-    size = (current->gc[0] + current->nx + current->gc[1]) * sizeof(float3);
-    memset(current->J_buf, 0, size);
-    
+void current_zero(t_current* current){
+    memset_float3vc_buffer(&current->J_buf, 0, current->nx);
 }
 
 /**
@@ -104,23 +143,25 @@ void current_zero(t_current *current){
  * @param current Electric current density
  */
 void current_update_gc(t_current *current){
-
-    if (current -> bc_type == CURRENT_BC_PERIODIC){
-        float3* restrict const J = current -> J;
+    if (current -> bc_type == CURRENT_BC_PERIODIC) {
+        
+        float* restrict const J_x = current->J.x;
+        float* restrict const J_y = current->J.y;
+        float* restrict const J_z = current->J.z;
         const int nx = current -> nx;
 
         // lower - add the values from upper boundary ( both gc and inside box )
-        for (int i=-current->gc[0]; i<current->gc[1]; i++){
-            J[i].x += J[nx + i].x;
-            J[i].y += J[nx + i].y;
-            J[i].z += J[nx + i].z;
+        for (int i=-current->gc[0]; i<current->gc[1]; i++) {
+            J_x[i] += J_x[nx + i];
+            J_y[i] += J_y[nx + i];
+            J_z[i] += J_z[nx + i];
         }
         
         // upper - just copy the values from the lower boundary 
-        for (int i=-current->gc[0]; i<current->gc[1]; i++){
-            J[nx + i].x = J[i].x;
-            J[nx + i].y = J[i].y;
-            J[nx + i].z = J[i].z;
+        for (int i=-current->gc[0]; i<current->gc[1]; i++) {
+            J_x[nx + i] = J_x[i];
+            J_y[nx + i] = J_y[i];
+            J_z[nx + i] = J_z[i];
         }
     }
 }
@@ -157,31 +198,35 @@ void current_update(t_current *current){
  * @param current Electric current object
  * @param jc Current component to save, must be one of {0,1,2}
  */
-void current_report(const t_current *current, const int jc){
-	
-    if (jc < 0 || jc > 2){
+void current_report(const t_current *current, const int jc)
+{   
+    // Check if jc is valid
+	if (jc < 0 || jc > 2) {
 		fprintf(stderr, "(*error*) Invalid current component (jc) selected, returning\n");
 		return;
 	}
 
     // Pack the information
     float buf[current->nx];
-    float3 *f = current->J;
 
+    // Fill buf with a copy of one of J components
     switch (jc) {
-        case 0:
-            for ( int i = 0; i < current->nx; i++ ) {
-                buf[i] = f[i].x;
+        case 0: 
+            float* restrict const J_x = current->J.x;
+            for (int i = 0; i < current->nx; i++) {
+                buf[i] = J_x[i];
             }
             break;
         case 1:
-            for ( int i = 0; i < current->nx; i++ ) {
-                buf[i] = f[i].y;
+            float* restrict const J_y = current->J.y;
+            for (int i = 0; i < current->nx; i++) {
+                buf[i] = J_y[i];
             }
             break;
         case 2:
-            for ( int i = 0; i < current->nx; i++ ) {
-                buf[i] = f[i].z;
+            float* restrict const J_z = current->J.z;
+            for (int i = 0; i < current->nx; i++) {
+                buf[i] = J_z[i];
             }
             break;
     }
@@ -219,7 +264,7 @@ void current_report(const t_current *current, const int jc){
         .time_units = "1/\\omega_p"
     };
 
-    zdf_save_grid( (void *) buf, zdf_float32, &info, &iter, "CURRENT" );
+    zdf_save_grid((void *) buf, zdf_float32, &info, &iter, "CURRENT");
 }
 
 /**
@@ -234,7 +279,8 @@ void current_report(const t_current *current, const int jc){
  * @param sa a value of the compensator kernel
  * @param sb b value of the compensator kernel
  */
-void get_smooth_comp( int n, float* sa, float* sb){
+void get_smooth_comp(int n, float* sa, float* sb) {
+    
     float a,b,total;
 
     a = -1;
@@ -244,6 +290,9 @@ void get_smooth_comp( int n, float* sa, float* sb){
     *sa = a / total;
     *sb = b / total;
 }
+
+
+extern void launchKernelX(const float sa, const float sb, t_current* current);
 
 /**
  * @brief Applies a 3 point kernel convolution along x
@@ -257,41 +306,59 @@ void get_smooth_comp( int n, float* sa, float* sb){
  */
 void kernel_x(t_current* const current, const float sa, const float sb){
 
-    float3* restrict const J = current -> J;
+    //float* restrict const J_x = current -> J.x;
+    //float* restrict const J_y = current -> J.y;
+    //float* restrict const J_z = current -> J.z;
+    //const int nx = current->nx;
+    
+    //float3Buffer* tmp = kernel_tmpbuf_get(current);
+    //float* restrict const tmp_x = tmp->x;
+    //float* restrict const tmp_y = tmp->y;
+    //float* restrict const tmp_z = tmp->z;
 
-    float3 fl = J[-1];
-    float3 f0 = J[ 0];
+    launchKernelX(sa, sb, current);
+    
+    /*
+     #pragma omp parallel
+    {
+        // Convolution
+        #pragma omp for
+        for (int i = 0; i < current->nx; i++){ 
+            tmp_x[i] = sa * J_x[i-1] + sb * J_x[i] + sa * J_x[i+1];
+            tmp_y[i] = sa * J_y[i-1] + sb * J_y[i] + sa * J_y[i+1];
+            tmp_z[i] = sa * J_z[i-1] + sb * J_z[i] + sa * J_z[i+1];
+        }
 
-    for(int i = 0; i < current -> nx; i++) {
-
-        float3 fu = J[i + 1];
-
-        float3 fs;
-
-        fs.x = sa * fl.x + sb * f0.x + sa * fu.x;
-        fs.y = sa * fl.y + sb * f0.y + sa * fu.y;
-        fs.z = sa * fl.z + sb * f0.z + sa * fu.z;
-
-        J[i] = fs;
-
-        fl = f0;
-        f0 = fu;
-
-    }
+        // Copy back
+       	#pragma omp for
+        for(int i = 0; i < nx; i++){
+            J_x[i] = tmp_x[i];
+            J_y[i] = tmp_y[i];
+            J_z[i] = tmp_z[i];
+        }
+     }
+    */
 
     // Update x boundaries for periodic boundaries
-    if (current -> bc_type == CURRENT_BC_PERIODIC){
+    if (current -> bc_type == CURRENT_BC_PERIODIC) {
         
-        int gc0 = current->gc[0]; 
-        int gc1 = current->gc[1];
+        // Update lower guard cells
+        const int gc0 = current->gc[0]; 
+        for(int i = -gc0; i<0; i++){
+            J_x[i] = J_x[current->nx + i];
+            J_y[i] = J_y[current->nx + i];
+            J_z[i] = J_z[current->nx + i];
 
-        for(int i = -gc0; i<0; i++)
-            J[i] = J[current->nx + i];
+        }
 
-        for (int i=0; i<gc1; i++)
-            J[current->nx + i] = J[i];
+        // Update upper guard cells
+        const int gc1 = current->gc[1];
+        for (int i=0; i<gc1; i++){
+            J_x[current->nx + i] = J_x[i];
+            J_y[current->nx + i] = J_y[i];
+            J_z[current->nx + i] = J_z[i];
+        }
     }
-
 
 }
 
@@ -306,7 +373,7 @@ void kernel_x(t_current* const current, const float sa, const float sb){
  * 
  * @param current Electric current density
  */
-void current_smooth(t_current* const current) {
+void current_smooth(t_current* const current){
 
     // Filter kernel [sa, sb, sa]
     float sa, sb;
@@ -314,7 +381,7 @@ void current_smooth(t_current* const current) {
     // X-direction filtering
     if (current -> smooth.xtype != NONE){
         
-        // Binomial filter (3 point kernel)
+        // Binomial filter
         sa = 0.25; sb = 0.5;
         for(int i = 0; i < current -> smooth.xlevel; i++){
             kernel_x(current, 0.25, 0.5);
@@ -326,5 +393,5 @@ void current_smooth(t_current* const current) {
             kernel_x(current, sa, sb);
         }
     }
-
 }
+

@@ -47,9 +47,11 @@ typedef struct Smooth {
  */
 typedef struct Current {
 	
-	float3vc_buffer J; // Grid cell [0] (Not counting guard cells)
+	//float3vc_buffer J; // Grid cell [0] (Not counting guard cells)
+	float3* J;
 	
-	float3vc_buffer J_buf; // Current density buffer (including guard cells)
+	//float3vc_buffer J_buf; // Current density buffer (including guard cells)
+	float3* J_buf;
 	
 	int nx;	// Number of grid cells
 

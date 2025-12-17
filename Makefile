@@ -10,18 +10,20 @@ SHELL := /bin/bash
 
 # OpenMP 
 OMP_NUM_THREADS?=64  # Number of cores of one node of AMD EPYC 7742
+# Use 128 threads for AMD EPYC ZEN 2 - dual socket version
+# Use 48 threads for Fujistu A64FX
+
 OMP_PLACES?=cores    # Bind each thread to a core
 OMP_PROC_BIND?=close # Bind each thread with close affinity
 
 MAKEFLAGS += --no-print-directory
 
 # Compiler
-CC = mpicc
+CC = clang
 
 # GCC flags
 CFLAGS = -Ofast -march=native -fopenmp -std=c99 -pedantic -Wall
 LDFLAGS = -lm -fopenmp
-
 
 .PHONY: all clean run docs Makefile
 
@@ -54,7 +56,7 @@ $(SRC_DIR)/%.o: $(SRC_DIR)/%.c
 # Endpoint to run the code
 run: all
 	@echo "=========================================="
-	@echo "Running ZPIC on gpu partition (EPYC 7742 + A100)"
+	@echo "Running ZPIC on gpu partition (EPYC 7742)"
 	@echo "Compiler: $(CC)"
 	@echo "Threads: $(OMP_NUM_THREADS)"
 	@echo "=========================================="

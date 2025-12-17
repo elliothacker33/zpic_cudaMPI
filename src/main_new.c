@@ -1,15 +1,27 @@
-/**
- * @brief Main file for ZPIC that runs the entire simulation
- * @authors Tomás Pereira, Diogo Silva
- * @date 2025-01-12
+/*
+Copyright (C) 2017 Instituto Superior Tecnico
+
+This file is part of the ZPIC Educational code suite
+
+The ZPIC Educational code suite is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+The ZPIC Educational code suite is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Standard libraries
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <math.h>
 
-// Libraries from the project
 #include "zpic.h"
 #include "simulation.h"
 #include "emf.h"
@@ -33,7 +45,7 @@ void output_energy_wrapper(t_simulation *sim, double en_in){
     printf("Initial energy: %e, Final energy: %e\n", en_in, en_out);
     
     // Check displacement of energy during simulation
-    double ratio = 100 * fabs((en_in - en_out) / en_out);
+    double ratio= 100 * fabs((en_in - en_out) / en_out);
     printf("\nFinal energy different from Initial Energy. Change in total energy is: %.2f %% \n",ratio);
 
     // If change is larger than 5%, then something is wrong
@@ -78,9 +90,7 @@ int main (int argc, const char * argv[]) {
 	fprintf(stderr, "\nSimulation ended.\n\n");
 
     // Output energy
-    #if 0
-        output_energy_wrapper(&sim, en_in);
-    #endif
+    output_energy_wrapper(&sim, en_in);
 
     // Report simulation times
     sim_timings(&sim, t_start, t_end);

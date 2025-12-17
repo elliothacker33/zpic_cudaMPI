@@ -64,7 +64,7 @@ uint32_t rand_uint32( void )
  * 
  * @return Double precision random number following a normal distribution 
  */
-double rand_norm( void )
+double rand_norm(void)
 {
 	static int iset = 0;
 	static double gset = 0.0;
@@ -78,14 +78,14 @@ double rand_norm( void )
 			// pick 2 uniform numbers inside the square extending from -1 to 1
 			// in each direction
 
-			v1 = ( rand_uint32() + 0.5 ) / 2147483649.0 - 1.0;
-			v2 = ( rand_uint32() + 0.5 ) / 2147483649.0 - 1.0;
+			v1 = (rand_uint32() + 0.5) / 2147483649.0 - 1.0;
+			v2 = (rand_uint32() + 0.5) / 2147483649.0 - 1.0;
 
 			// check if they are inside the unit circle, and not (0,0)
 			// otherwise try again
 			rsq = v1*v1 + v2*v2;
 
-		} while ( rsq == 0.0 || rsq >= 1.0 );
+		} while (rsq == 0.0 || rsq >= 1.0);
 
 		// Use Box-Muller method to generate random deviates with
 		// normal (gaussian) distribution
