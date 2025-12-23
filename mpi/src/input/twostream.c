@@ -33,7 +33,6 @@ void sim_init(t_simulation* sim){
 
 	t_species* species = (t_species *) malloc(n_species * sizeof(t_species));
 
-
 	// Initial fluid and thermal velocities
 	float ufl[] = {0.2 , 0.0 , 0.0};
 	float uth[] = {0.001 , 0.001 , 0.001};
@@ -42,6 +41,7 @@ void sim_init(t_simulation* sim){
 	spec_new(&species[0], "right", -1.0, ppc, ufl, uth, nx, box, dt, NULL);
 
 	ufl[0] = -ufl[0];
+	
 	spec_new(&species[1], "left", -1.0, ppc, ufl, uth, nx, box, dt, NULL);
 
 	// Initialize Simulation data

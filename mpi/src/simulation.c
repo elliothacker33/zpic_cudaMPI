@@ -48,18 +48,18 @@ void sim_iter(t_simulation* sim){
 	int rank; 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	if (rank == 0){
-		// Advance particles and deposit current
-		current_zero(&sim -> current);
-	}
-
+	// Zero current density
+	current_zero(&sim -> current);
+	
 	// Advance particles
 	for (int i = 0; i<sim -> n_species; i++)
 		spec_advance(&sim -> species[i], &sim -> emf, &sim -> current);
-	
+
 	if (rank == 0){
 		// Update current boundary conditions and advance iteration
 		current_update(&sim -> current);
+
+		// Renew current density in all ranks
 
 		// Advance EM fields
 		emf_advance(&sim -> emf, &sim -> current);

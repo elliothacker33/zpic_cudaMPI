@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <omp.h>
+#include <mpi.h>
 
 // ZPIC headers
 #include "../lib/zdf.h"
@@ -17,7 +19,6 @@
 // Guard cells 
 #define GC_TOP 2
 #define GC_BOTTOM 1
-
 
 /* ---------------------------------------------------------------------------
  #  ############## TEMPORARY BUFFER USED FOR KERNEL_X ###############
@@ -47,9 +48,66 @@ void kernel_tmpbuf_cleanup() {
     }
 }
 
-float3Buffer* kernel_tmpbuf_get() {
+float3Buffer* kernel_tmpbuf_get(t_current* current) {
+    if (!is_allocated){
+        kernel_tmpbuf_init(current->chunk_size);
+        is_allocated = 1;
+    }   
     return &tmp;
 }
+
+
+/**
+ * @brief Allocates chunks of memory for other MPI ranks except rank 0 wich manages the whole buffer
+ * @param current Current density object
+ * @param chunk Chunk of memory to be allocated
+ * @param nx Number of grid cells
+ * @param gc0 Number of guard cells on the lower boundary
+ * @param gc1 Number of guard cells on the upper boundary
+ */
+void mpi_distributed_alloc_float3Buffer(t_current* current, float3Buffer* chunk, int nx, int gc0, int gc1) {
+
+    // Get MPI ranks and communicator size
+    int rank, comm_size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+    
+    size_t total_size = gc0 + nx + gc1;
+    size_t chunk_size = total_size / comm_size;
+    size_t chunk_rem = total_size % comm_size; 
+
+
+    // Guard cells need to fit rank 0
+    if (rank == 0 && chunk_size <= gc0){
+        printf("ERROR: Not enough guard cells to fit rank 0\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Handle last MPI rank (Edge case)
+    if (rank == comm_size - 1){ 
+        chunk_size += chunk_rem;
+        if (chunk_size <= gc1){
+            printf("ERROR: Not enough guard cells to fit rank %i\n", rank);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    alloc_float3Buffer(chunk, chunk_size);
+    current->chunk_size = chunk_size;
+
+    if (rank == 0){
+        current->J_0x = &current->J_buf.x[gc0];
+        current->J_0y = &current->J_buf.y[gc0];
+        current->J_0z = &current->J_buf.z[gc0];
+    }
+
+    current->J_0x = &current->J_buf.x[0];
+    current->J_0y = &current->J_buf.y[0];
+    current->J_0z = &current->J_buf.z[0];
+
+    current->nx = nx;
+}
+
 
 /**
  * @brief Initializes Electric current density object
@@ -64,25 +122,14 @@ void current_new(t_current *current, int nx, float box, float dt){
     // Number of guard cells for linear interpolation
     int gc[2] = {GC_BOTTOM, GC_TOP}; 
     
-    // Allocate global array
-    size_t size;
-    
-    size = gc[0] + nx + gc[1];
-    alloc_float3Buffer(&current->J_buf, size);
-
-    // store nx and gc values
-    current->nx = nx;
-    current->gc[0] = gc[0];
-    current->gc[1] = gc[1];
-    
-    // Make J point to cell [0]
-    current->J_0x = &current->J_buf.x[gc[0]];
-    current->J_0y = &current->J_buf.y[gc[0]];
-    current->J_0z = &current->J_buf.z[gc[0]];
+    // MPI distributed allocation
+    mpi_distributed_alloc_float3Buffer(&current->J_buf, nx, gc[0], gc[1]);
     
     // Set cell sizes and box limits
     current -> box = box;
     current -> dx  = box / nx;
+    current -> gc[0] = gc[0];
+    current -> gc[1] = gc[1];
 
     // Clear smoothing options
     current -> smooth = (t_smooth) {
@@ -126,11 +173,8 @@ void current_delete(t_current *current){
  * @param current   Electric current density
  */
 void current_zero(t_current *current){
-    
     // Mem setting J_buf with zero
-    int size = current->gc[0] + current->nx + current->gc[1];
-    mem_set_float3Buffer(&current->J_buf, size, 0);
-    
+    mem_set_float3Buffer(&current->J_buf, current->chunk_size, 0);
 }
 
 /**
@@ -144,27 +188,58 @@ void current_zero(t_current *current){
  */
 void current_update_gc(t_current *current){
 
-    if (current -> bc_type == CURRENT_BC_PERIODIC) {
+    int rank, comm_size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+
+    if (current -> bc_type == CURRENT_BC_PERIODIC && (rank == 0 || rank == comm_size - 1)) {
         
         float* restrict const J_0x = current -> J_0x;
         float* restrict const J_0y = current -> J_0y;
         float* restrict const J_0z = current -> J_0z;
-        const int nx = current -> nx;
 
-        // lower - add the values from upper boundary (both gc and inside box)
-        int gc0 = -current->gc[0];
-        int gc1 = current->gc[1];
-        for (int i=gc0; i < gc1; i++){
-            J_0x[i] += J_0x[nx + i];
-            J_0y[i] += J_0y[nx + i];
-            J_0z[i] += J_0z[nx + i];
+        size_t transfer_size = current->gc[0] + current->gc[1];            
+        float tmp_x[transfer_size];
+        float tmp_y[transfer_size];
+        float tmp_z[transfer_size];
+
+        if (rank == 0){
+
+            // Receive from final rank values
+            MPI_Recv(tmp, transfer_size, MPI_FLOAT, comm_size - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(tmp, transfer_size, MPI_FLOAT, comm_size - 1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(tmp, transfer_size, MPI_FLOAT, comm_size - 1, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+            // lower - add the values from upper boundary (both gc and inside box)
+            for (int i = 0; i < transfer_size; i++){
+                J_0x[i - current->gc[0]] += tmp_x[i];
+                J_0y[i - current->gc[0]] += tmp_y[i];
+                J_0z[i - current->gc[0]] += tmp_z[i];
+            }
+
+            // Send new values to final rank
+            MPI_Send(&J_0x[-current->gc[0]], transfer_size, MPI_FLOAT, comm_size - 1, 0, MPI_COMM_WORLD);
+            MPI_Send(&J_0y[-current->gc[0]], transfer_size, MPI_FLOAT, comm_size - 1, 1, MPI_COMM_WORLD);
+            MPI_Send(&J_0z[-current->gc[0]], transfer_size, MPI_FLOAT, comm_size - 1, 2, MPI_COMM_WORLD);
         }
+        else{
             
-        // upper - just copy the values from the lower boundary     
-        for (int i=gc0; i < gc1; i++){
-            J_0x[nx + i] = J_0x[i];
-            J_0y[nx + i] = J_0y[i];
-            J_0z[nx + i] = J_0z[i];
+            const int idx_send = current -> chunk_size - transfer_size - 1;
+
+            MPI_Send(&J_0x[idx_send], transfer_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+            MPI_Send(&J_0y[idx_send], transfer_size, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
+            MPI_Send(&J_0z[idx_send], transfer_size, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
+
+            MPI_Recv(tmp_x, transfer_size, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(tmp_y, transfer_size, MPI_FLOAT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(tmp_z, transfer_size, MPI_FLOAT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            
+            // upper - just copy the values from the lower boundary     
+            for (int i = 0; i < transfer_size; i++){
+                J_0x[idx_send + i] = tmp_x[i];
+                J_0y[idx_send + i] = tmp_y[i];
+                J_0z[idx_send + i] = tmp_z[i];
+            }
         }
     }
 }
@@ -182,7 +257,7 @@ void current_update_gc(t_current *current){
 void current_update(t_current *current){
     
     // Boundary conditions / guard cells
-    current_update_gc (current);
+    current_update_gc(current);
 
     // Smoothing
     current_smooth(current);
@@ -277,7 +352,6 @@ void current_report(const t_current *current, const int jc){
  */
 void get_smooth_comp(int n, float* sa, float* sb) {
     float a,b,total;
-
     a = -1;
     b = (4.0 + 2.0*n)/n;
     total = 2*a + b;
@@ -298,25 +372,31 @@ void get_smooth_comp(int n, float* sa, float* sb) {
  */
 void kernel_x(t_current* const current, const float sa, const float sb){
 
+    int rank, comm_size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+
+    // Temporary buffers
     float* restrict const J0_x = current -> J_0x;
     float* restrict const J0_y = current -> J_0y;
     float* restrict const J0_z = current -> J_0z;
 
+    // Get temporary buffer with chunk size
     float3Buffer* tmp = kernel_tmpbuf_get();
     float* restrict const tmp_x = tmp->x;
     float* restrict const tmp_y = tmp->y;
     float* restrict const tmp_z = tmp->z;
-
+    
     // Stencil operation (Vectorized)
-    // Convolution
-    for(int i = 0; i < current -> nx; i++){
+    // Convolution (Using HALO cells)
+    for(int i = 0; i < current -> ; i++){
         tmp_x[i] = sa * J0_x[i-1] + sb * J0_x[i] + sa * J0_x[i+1];
         tmp_y[i] = sa * J0_y[i-1] + sb * J0_y[i] + sa * J0_y[i+1];
         tmp_z[i] = sa * J0_z[i-1] + sb * J0_z[i] + sa * J0_z[i+1];
     }
 
     // Copy back
-    for (int i = 0; i < current -> nx; i++){
+    for (int i = 0; i < current -> nx_chunk; i++){
         J0_x[i] = tmp_x[i];
         J0_y[i] = tmp_y[i];
         J0_z[i] = tmp_z[i];
@@ -328,13 +408,13 @@ void kernel_x(t_current* const current, const float sa, const float sb){
         int gc0 = -current->gc[0];
         int gc1 = current->gc[1];
 
-        for(int i = gc0; i<0; i++){
+        for(int i = -current->gc[0]; i < 0; i++){
             J0_x[i] = J0_x[current->nx + i];
             J0_y[i] = J0_y[current->nx + i];
             J0_z[i] = J0_z[current->nx + i];
         }
         
-        for (int i=0; i<gc1; i++){
+        for (int i = 0; i < gc1; i++){
             J0_x[current->nx + i] = J0_x[i];
             J0_y[current->nx + i] = J0_y[i];
             J0_z[current->nx + i] = J0_z[i];

@@ -1,11 +1,11 @@
-/*
+/* 
  *  current.h
  *  zpic
  *
  *  Created by Ricardo Fonseca on 12/8/10.
  *  Copyright 2010 Centro de Física dos Plasmas. All rights reserved.
  *
- */
+*/
 
 #ifndef __CURRENT__
 #define __CURRENT__
@@ -56,6 +56,8 @@ typedef struct Current {
 	int nx;			///< Number of grid points (excluding guard cells)
 	int gc[2];		///< Number of guard cells (lower/upper)
 	
+	size_t chunk_size;
+
 	float box;		///< Physical size of simulation box
 	
 	float dx;		///< Grid cell size
@@ -69,6 +71,16 @@ typedef struct Current {
 	enum current_boundary bc_type;	///< Type of boundary condition
 	
 } t_current;
+
+/**
+ * @brief Allocates chunks of memory for other MPI ranks except rank 0 wich manages the whole buffer
+ * @param current Current density object
+ * @param chunk Chunk of memory to be allocated
+ * @param nx Number of grid cells
+ * @param gc0 Number of guard cells on the lower boundary
+ * @param gc1 Number of guard cells on the upper boundary
+ */
+void mpi_distributed_alloc_float3Buffer(t_current* current, float3Buffer* chunk, int nx, int gc0, int gc1);
 
 /**
  * @brief Function that runs binomial filter on current density object
@@ -85,28 +97,28 @@ void current_smooth(t_current* const current);
  * @param box 		Physical box size
  * @param dt 		Simulation time step
   */
-void current_new( t_current *current, int nx, float box, float dt );
+void current_new(t_current *current, int nx, float box, float dt);
 
 /**
  * @brief Frees dynamic memory from electric current density
  * 
  * @param current Electric current density object
  */
-void current_delete( t_current *current );
+void current_delete(t_current *current);
 
 /**
  * @brief Sets all electric current density values to zero
  * 
  * @param current Electric current density object
  */
-void current_zero( t_current *current );
+void current_zero(t_current *current);
 
 /**
  * @brief Advances electric current density 1 time step
  * 
  * @param current Electric current density object
  */
-void current_update( t_current *current );
+void current_update(t_current *current);
 
 /**
  * @brief Saves electric current density diagnostic information to disk
@@ -114,7 +126,7 @@ void current_update( t_current *current );
  * @param current Electric current density object
  * @param jc Current component to save, must be one of {0,1,2}
  */
-void current_report( const t_current *current, const int jc );
+void current_report(const t_current *current, const int jc);
 
 /**
  * @brief Allocates a temporary buffer of size nx (Number of grid cells)

@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <omp.h>
+#include <mpi.h>
 
 #include "../lib/particles.h"
 #include "../lib/random.h"
@@ -543,7 +544,7 @@ void spec_inject_particles( t_species* spec, const int range[] )
  **/
 void spec_new( t_species* spec, char name[], const float m_q, const int ppc,
               const float *ufl, const float * uth,
-              const int nx, float box, const float dt, t_density* density )
+              const int nx, float box, const float dt, t_density* density)
 {
 
     int npc;
@@ -573,9 +574,9 @@ void spec_new( t_species* spec, char name[], const float m_q, const int ppc,
     spec->is_init = 0;
 
     // Initialize density profile
-    if ( density ) {
+    if (density){
         spec -> density = *density;
-        if ( spec -> density.n == 0. ) spec -> density.n = 1.0;
+        if (spec -> density.n == 0.) spec -> density.n = 1.0;
     } else {
         // Default values
         spec -> density = (t_density) { .type = UNIFORM, .n = 1.0 };
@@ -587,13 +588,13 @@ void spec_new( t_species* spec, char name[], const float m_q, const int ppc,
     spec ->q *= fabsf( spec -> density.n );
 
     // Initialize temperature profile
-    if ( ufl ) {
+    if (ufl) {
         for(int i=0; i<3; i++) spec -> ufl[i] = ufl[i];
     } else {
         for(int i=0; i<3; i++) spec -> ufl[i] = 0;
     }
 
-    if ( uth ) {
+    if (uth) {
         for(int i=0; i<3; i++) spec -> uth[i] = uth[i];
     } else {
         for(int i=0; i<3; i++) spec -> uth[i] = 0;
@@ -635,7 +636,7 @@ void spec_new( t_species* spec, char name[], const float m_q, const int ppc,
  *
  * @param spec      Particle species
  */
-void spec_move_window( t_species *spec ){
+void spec_move_window(t_species *spec){
 
     if ((spec->iter * spec->dt ) > (spec->dx * (spec->n_move + 1)))  {
 
@@ -699,11 +700,10 @@ void spec_delete(t_species* spec)
  * @param qvz       Z current ( q * vz )
  * @param current   Electric current density
  */
-void dep_current_esk( int ix0, int di,
+void dep_current_esk(int ix0, int di,
                         float x0, float x1,
                         float qnx, float qvy, float qvz,
-                        t_current *current )
-{
+                        t_current *current){
 
     float S0x[4], S1x[4], DSx[4];
     float Wx[4], Wy[4], Wz[4];
@@ -717,8 +717,8 @@ void dep_current_esk( int ix0, int di,
         S1x[i] = 0.0f;
     }
 
-    S1x[ 1 + di ] = 1.0f - x1;
-    S1x[ 2 + di ] = x1;
+    S1x[1 + di] = 1.0f - x1;
+    S1x[2 + di] = x1;
 
     for (int i=0; i<4; i++) {
         DSx[i] = S1x[i] - S0x[i];
@@ -878,8 +878,7 @@ void dep_current_zamb( int ix0, int di,
  *
  * @param spec      Particle species
  */
-void spec_sort(t_species* spec)
-{
+void spec_sort(t_species* spec){
 
     const int ncell = spec->nx;
 
@@ -922,7 +921,7 @@ void spec_sort(t_species* spec)
             move_ptr_float( &spec->part.uz[k], &spec->part.uz[i]);
 
             int t = idx[k];
-            idx[k] = -1;
+           idx[k] = -1;
             k = t;
         }
     }
@@ -937,44 +936,7 @@ void spec_sort(t_species* spec)
 
  *********************************************************************************************/
 
-/**
- * @brief Interpolates EM fields at particle position
- *
- * Routine uses linear interpolation and accounts for a staggered (Yee)
- * mesh, with the charge at the lower corner of the cell
- *
- * @param E     Electric field grid
- * @param B     Magnetic field grid
- * @param part  Particle data
- * @param Ep    E-field interpolated at particle position
- * @param Bp    B-field interpolated at particle position
- */
-void interpolate_fld( const float* restrict const E_part_x, const float* restrict const E_part_y, const float* restrict const E_part_z,
-                      const float* restrict const B_part_x, const float* restrict const B_part_y, const float* restrict const B_part_z,
-              const t_part_buffer part, int idx, float3* restrict const Ep, float3* restrict const Bp )
-{
-    int i, ih;
-    float w1, w1h;
-
-    i = part.ix[idx];
-
-    w1 = part.x[idx];
-    ih = (w1 <0.5f)? -1 : 0;
-    w1h = w1 + ((w1 <0.5f)?0.5f:-0.5f);
-
-    ih += i;
-
-    Ep->x = E_part_x[ih] * (1.0f - w1h) + E_part_x[ih+1]* w1h;
-    Ep->y = E_part_y[i] * (1.0f -  w1) + E_part_y[i+1] * w1;
-    Ep->z = E_part_z[i] * (1.0f -  w1) + E_part_z[i+1] * w1;
-
-    Bp->x = B_part_x[i] * (1.0f  - w1) + B_part_x[i+1] * w1;
-    Bp->y = B_part_y[ih] * (1.0f - w1h) + B_part_y[ih+1] * w1h;
-    Bp->z = B_part_z[ih] * (1.0f - w1h) + B_part_z[ih+1] * w1h;
-
-}
-
-/**
+ /**
  * @brief Returns number of cells moved
  *
  * Note that the particle will move at most 1 cell in either direction
@@ -1007,16 +969,30 @@ int ltrim( float x )
  */
 void spec_advance(t_species* spec, t_emf* emf, t_current* current){
     
-    uint64_t t0;
-    t0 = timer_ticks();
+    // Get rank and size
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    const float tem   = 0.5 * spec->dt/spec -> m_q;
+    
+    // Only rank 0 will do the timing
+    if (rank == 0){
+        uint64_t t0;
+        t0 = timer_ticks();
+    }
+
+    // Common variables in all ranks
+    const float tem   = 0.5 * spec->dt/spec -> m_q; 
     const float dt_dx = spec->dt / spec->dx;
     const float qnx = spec -> q *  spec->dx / spec->dt;
-    const int nx0 = spec -> nx;
-    double energy = 0;
+
+    // Energy accumulator that will be reduced to rank 0
+    double energy_global = 0;
+
+    // Number of threads per rank
     int num_threads = omp_get_max_threads();
 
+    // Size of chunk to iterate over
     int* restrict const part_ix = spec -> part.ix;
     float* restrict const part_x = spec -> part.x;
     float* restrict const part_ux = spec -> part.ux;
@@ -1041,8 +1017,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
         }
     }
 
-
-    #pragma omp parallel reduction(+:energy)
+    #pragma omp parallel reduction(+:energy_local)
     {
         int tid = omp_get_thread_num();
         float* restrict const J_local_x = spec->J_local_per_thread[tid].x;
@@ -1050,7 +1025,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
         float* restrict const J_local_z = spec->J_local_per_thread[tid].z;
 
         mem_set_float3Buffer(&spec->J_local_per_thread[tid], current_size, 0.0f);
-        double energy_local = 0;
+        double energy_thread = 0;
 
         #pragma omp for
         for (int i=0; i < spec->np; i++) {
@@ -1073,7 +1048,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
             iz = part_ix[i];
 
             w1 = part_x[i];
-            ih = (w1 <0.5f)? -1 : 0;
+            ih = (w1 < 0.5f)? -1 : 0;
             w1h = w1 + ((w1 <0.5f)?0.5f:-0.5f);
 
             ih += iz;
@@ -1097,7 +1072,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
             u2 = utx*utx + uty*uty + utz*utz;
             gamma = sqrtf(1 + u2);
 
-            energy_local += u2 / ( 1 + gamma );
+            energy_thread += u2 / ( 1 + gamma );
 
             gtem = tem / gamma;
 
@@ -1214,44 +1189,51 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
             }
         }
     }
-        energy += energy_local;
+        energy_local += energy_thread;
     }
 
-    spec -> energy = spec-> q * spec -> m_q * energy * spec -> dx;
-    spec -> iter += 1;
+    // Reduce all energy into rank 0 
+    MPI_Reduce(&energy_local, &energy_global, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    // Boundary conditions (serial)
-    if (spec -> moving_window || spec -> bc_type == PART_BC_OPEN){
-        if (spec -> moving_window ) spec_move_window( spec );
-	    int i = 0;
+    // Synchronize distributed data (on rank 0)
+    sync
+    if (rank == 0){
 
-        while (i < spec -> np) {
-            if (( spec -> part.ix[i] < 0 ) || ( spec -> part.ix[i] >= nx0 )) {
-                spec -> part.ix[i] = spec -> part.ix[ -- spec -> np ];
-                spec -> part.x[i] = spec -> part.x[ --spec -> np ];
-                spec -> part.ux[i] = spec -> part.ux[ --spec -> np ];
-                spec -> part.uy[i] = spec -> part.uy[ --spec -> np ];
-                spec -> part.uz[i] = spec -> part.uz[ --spec -> np ];
-                continue;
+        const int nx0 = spec -> nx;
+        spec -> energy = spec-> q * spec -> m_q * energy * spec -> dx;
+        spec -> iter += 1;
+
+        // Boundary conditions (serial)
+        if (spec -> moving_window || spec -> bc_type == PART_BC_OPEN){
+            if (spec -> moving_window ) spec_move_window(spec);
+            int i = 0;
+
+            while (i < spec -> np) {
+                if ((spec -> part.ix[i] < 0) || (spec -> part.ix[i] >= nx0)) {
+                    spec -> part.ix[i] = spec -> part.ix[ -- spec -> np ];
+                    spec -> part.x[i] = spec -> part.x[ --spec -> np ];
+                    spec -> part.ux[i] = spec -> part.ux[ --spec -> np ];
+                    spec -> part.uy[i] = spec -> part.uy[ --spec -> np ];
+                    spec -> part.uz[i] = spec -> part.uz[ --spec -> np ];
+                    continue;
+                }
+                i++;
             }
-            i++;
+
+        } else {
+            for (int i=0; i<spec->np; i++) {
+                spec-> part.ix[i] += (( spec -> part.ix[i] < 0 ) ? nx0 : 0 ) -(( spec -> part.ix[i] >= nx0 ) ? nx0 : 0);
+            }
         }
 
-    } else {
-        #pragma omp parallel for
-	    for (int i=0; i<spec->np; i++) {
-            spec-> part.ix[i] += (( spec -> part.ix[i] < 0 ) ? nx0 : 0 ) -
-                                 (( spec -> part.ix[i] >= nx0 ) ? nx0 : 0);
+        // Sorting disabled for this simulation
+        if (spec -> n_sort > 0) {
+            if (!(spec -> iter % spec -> n_sort)) spec_sort(spec);
         }
+
+        _spec_npush += spec -> np;
+        _spec_time += timer_interval_seconds(t0, timer_ticks());
     }
-
-
-    if ( spec -> n_sort > 0 ) {
-        if ( ! (spec -> iter % spec -> n_sort) ) spec_sort( spec );
-    }
-
-    _spec_npush += spec -> np;
-    _spec_time += timer_interval_seconds( t0, timer_ticks() );
 }
 
 /*********************************************************************************************

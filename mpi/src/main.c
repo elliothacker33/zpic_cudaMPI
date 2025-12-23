@@ -37,33 +37,29 @@ int main (int argc, const char * argv[]) {
     // Initialize MPI
     MPI_Init(&argc, &argv);
 
-    int rank;
-    int size; 
+    // Get rank size
+    int rank;    
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
+    // Initialize simulation for all ranks
     t_simulation sim;
+    sim_init(&sim);
+
+    // Main loop variables
+    int n;
+    float t;
+    double en_in, en_out;
+    double t0, t1;
+
 
     if (rank == 0){
-
-        // Initialize simulation
-        t_simulation sim;
-        sim_init(&sim);
-
-        // Run simulation
-        int n;
-        float t;
-        double en_in, en_out;
-        
+        // Timer initialization
         printf("Starting simulation ...\n\n");
-        uint64_t t0,t1;
         t0 = timer_ticks();
         printf("n = 0, t = 0.0\n");
-
-        // Create temporary buffer for kernel_x
-        kernel_tmpbuf_init(sim.current.nx);
-
     }
 
+    // Main loop
     for (n=0,t=0.0; t<=sim.tmax; n++, t=n*sim.dt){
         
         // Report before iteration
@@ -71,6 +67,7 @@ int main (int argc, const char * argv[]) {
             if (report(n, sim.ndump)) sim_report(&sim);
         }
 
+        // Run iteration
         sim_iter(&sim);
 
         // Report after iteration (only first iteration)
@@ -84,23 +81,22 @@ int main (int argc, const char * argv[]) {
         kernel_tmpbuf_cleanup();
 
         printf("n = %i, t = %f\n",n,t);
-
         t1 = timer_ticks();
         fprintf(stderr, "\nSimulation ended.\n\n");
+
         sim_report_energy(&sim);
         sim_report_energy_ret(&sim, &en_out);
         printf("Initial energy: %e, Final energy: %e\n", en_in, en_out);
         double ratio=100*fabs((en_in-en_out)/en_out);
         printf("\nFinal energy different from Initial Energy. Change in total energy is: %.2f %% \n",ratio);
         if (ratio>5) { printf("ERROR: Large Change\n"); return 1;}
-
+        
         // Simulation times
         sim_timings(&sim, t0, t1);
-
-        // Cleanup data
-        sim_delete(&sim);
     }
 
+    // Cleanup data
+    sim_delete(&sim);
 
     // Finalize MPI
     MPI_Finalize();

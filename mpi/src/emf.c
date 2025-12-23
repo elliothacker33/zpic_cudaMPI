@@ -9,17 +9,26 @@
  * 
  */
 
+// Std libraries
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include <math.h>
 #include <omp.h>
+#include <mpi.h>
 
+// ZPIC headers
 #include "../lib/emf.h"
 #include "../lib/zdf.h"
 #include "../lib/timer.h"
 
+// Guard cells (One cell on each side)
+#define GC_TOP 2
+#define GC_BOTTOM 1
+
+// Halo cells (Equal size on each side)
+#define HALO_SIZE 1
 
 
 /// Time spent advancing the EM fields
@@ -30,8 +39,7 @@ static double _emf_time = 0.0;
  * 
  * @return emf_time 	Time spent in seconds
  */
-double emf_time( void )
-{
+double emf_time(void){
 	return _emf_time;
 }
 
@@ -56,7 +64,7 @@ void emf_new( t_emf *emf, int nx, float box, const float dt )
 {
 
 	// Number of guard cells for linear interpolation
-	int gc[2] = {1,2};
+	int gc[2] = {GC_BOTTOM, GC_TOP};
 
 	// Allocate global arrays
 	size_t size = gc[0] + nx + gc[1];
@@ -126,11 +134,9 @@ void emf_new( t_emf *emf, int nx, float box, const float dt )
  * 
  * @param emf 	EM fields
  */
-void emf_delete( t_emf *emf )
-{
+void emf_delete(t_emf *emf){
 
 	// Delete fields
-
 	free_float3Buffer(&emf->E_buf);
 	free_float3Buffer(&emf->B_buf);
 
@@ -142,11 +148,11 @@ void emf_delete( t_emf *emf )
 	emf->B_z = NULL;
 
 	// Delete external fields
-	if ( emf -> ext_fld.E_type > EMF_FLD_TYPE_NONE ) {
+	if (emf -> ext_fld.E_type > EMF_FLD_TYPE_NONE) {
 		free_float3Buffer(&emf -> ext_fld.E_part_buf);
 	}
 
-	if ( emf -> ext_fld.B_type > EMF_FLD_TYPE_NONE ) {
+	if (emf -> ext_fld.B_type > EMF_FLD_TYPE_NONE) {
 		free_float3Buffer(&emf -> ext_fld.B_part_buf);
 	}
 
@@ -672,7 +678,7 @@ External Fields
  * @param emf 		EM field
  * @param ext_fld 	External fields
  */
-void emf_set_ext_fld( t_emf* const emf, t_emf_ext_fld* ext_fld ) {
+void emf_set_ext_fld(t_emf* const emf, t_emf_ext_fld* ext_fld ) {
 
 	emf -> ext_fld.E_type = ext_fld -> E_type;
 
