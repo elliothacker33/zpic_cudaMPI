@@ -15,7 +15,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <omp.h>
-#include <mpi.h>
 
 #include "../lib/particles.h"
 #include "../lib/random.h"
@@ -969,28 +968,19 @@ int ltrim( float x )
  */
 void spec_advance(t_species* spec, t_emf* emf, t_current* current){
     
-    // Get rank and size
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-    
     // Only rank 0 will do the timing
-    if (rank == 0){
-        uint64_t t0;
-        t0 = timer_ticks();
-    }
-
+    uint64_t t0;
+    t0 = timer_ticks();
+    
     // Common variables in all ranks
     const float tem   = 0.5 * spec->dt/spec -> m_q; 
     const float dt_dx = spec->dt / spec->dx;
     const float qnx = spec -> q *  spec->dx / spec->dt;
 
-    // Energy accumulator that will be reduced to rank 0
-    double energy_global = 0;
-
     // Number of threads per rank
     int num_threads = omp_get_max_threads();
+
+    double energy = 0;
 
     // Size of chunk to iterate over
     int* restrict const part_ix = spec -> part.ix;
@@ -1017,7 +1007,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
         }
     }
 
-    #pragma omp parallel reduction(+:energy_local)
+    #pragma omp parallel reduction(+:energy)
     {
         int tid = omp_get_thread_num();
         float* restrict const J_local_x = spec->J_local_per_thread[tid].x;
@@ -1115,7 +1105,7 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
             int ix0 = spec->part.ix[i];
             float x0 = spec -> part.x[i];
 
-            typedef struct { float x0, x1, dx, qvy, qvz; int ix; } t_vp;
+            typedef struct {float x0, x1, dx, qvy, qvz; int ix;} t_vp;
             t_vp vp[3];
             int vnp = 1;
 
@@ -1166,74 +1156,69 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
         }
 
 
-    const int gc0 = current->gc[0];
-    const int n_cells = current->nx;
-    int block_size = 256;
+        const int gc0 = current->gc[0];
+        const int n_cells = current->nx;
+        int block_size = 256;
 
-    float* restrict const J_0x = current->J_0x;
-    float* restrict const J_0y = current->J_0y;
-    float* restrict const J_0z = current->J_0z;
+        float* restrict const J_0x = current->J_0x;
+        float* restrict const J_0y = current->J_0y;
+        float* restrict const J_0z = current->J_0z;
 
-    #pragma omp for nowait
-    for (int block = 0; block < n_cells; block += block_size) {
-        const int block_end = (block + block_size < n_cells) ? block + block_size : n_cells;
-        for (int t = 0; t < num_threads; t++) {
-	    const float* restrict const J_total_x = spec->J_local_per_thread[t].x;
-	    const float* restrict const J_total_y = spec->J_local_per_thread[t].y;
-        const float* restrict const J_total_z = spec->J_local_per_thread[t].z;
-            for (int j = block; j < block_end; j++){
-                const int idx_local = gc0 + j;
-                J_0x[j] += J_total_x[idx_local];
-                J_0y[j] += J_total_y[idx_local];
-                J_0z[j] += J_total_z[idx_local];
-            }
-        }
-    }
-        energy_local += energy_thread;
-    }
-
-    // Reduce all energy into rank 0 
-    MPI_Reduce(&energy_local, &energy_global, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    // Synchronize distributed data (on rank 0)
-    sync
-    if (rank == 0){
-
-        const int nx0 = spec -> nx;
-        spec -> energy = spec-> q * spec -> m_q * energy * spec -> dx;
-        spec -> iter += 1;
-
-        // Boundary conditions (serial)
-        if (spec -> moving_window || spec -> bc_type == PART_BC_OPEN){
-            if (spec -> moving_window ) spec_move_window(spec);
-            int i = 0;
-
-            while (i < spec -> np) {
-                if ((spec -> part.ix[i] < 0) || (spec -> part.ix[i] >= nx0)) {
-                    spec -> part.ix[i] = spec -> part.ix[ -- spec -> np ];
-                    spec -> part.x[i] = spec -> part.x[ --spec -> np ];
-                    spec -> part.ux[i] = spec -> part.ux[ --spec -> np ];
-                    spec -> part.uy[i] = spec -> part.uy[ --spec -> np ];
-                    spec -> part.uz[i] = spec -> part.uz[ --spec -> np ];
-                    continue;
+        #pragma omp for nowait
+        for (int block = 0; block < n_cells; block += block_size) {
+            const int block_end = (block + block_size < n_cells) ? block + block_size : n_cells;
+            for (int t = 0; t < num_threads; t++) {
+            const float* restrict const J_total_x = spec->J_local_per_thread[t].x;
+            const float* restrict const J_total_y = spec->J_local_per_thread[t].y;
+            const float* restrict const J_total_z = spec->J_local_per_thread[t].z;
+                for (int j = block; j < block_end; j++){
+                    const int idx_local = gc0 + j;
+                    J_0x[j] += J_total_x[idx_local];
+                    J_0y[j] += J_total_y[idx_local];
+                    J_0z[j] += J_total_z[idx_local];
                 }
-                i++;
-            }
-
-        } else {
-            for (int i=0; i<spec->np; i++) {
-                spec-> part.ix[i] += (( spec -> part.ix[i] < 0 ) ? nx0 : 0 ) -(( spec -> part.ix[i] >= nx0 ) ? nx0 : 0);
             }
         }
+        
+        energy += energy_thread;
+    } 
 
-        // Sorting disabled for this simulation
-        if (spec -> n_sort > 0) {
-            if (!(spec -> iter % spec -> n_sort)) spec_sort(spec);
+    const int nx0 = spec -> nx;
+    spec -> energy = spec-> q * spec -> m_q * energy * spec -> dx;
+    spec -> iter += 1;
+
+    // Boundary conditions (serial)
+    if (spec -> moving_window || spec -> bc_type == PART_BC_OPEN){
+        if (spec -> moving_window ) spec_move_window(spec);
+        int i = 0;
+
+        while (i < spec -> np) {
+            if ((spec -> part.ix[i] < 0) || (spec -> part.ix[i] >= nx0)) {
+                spec -> part.ix[i] = spec -> part.ix[-- spec -> np];
+                spec -> part.x[i] = spec -> part.x[--spec -> np];
+                spec -> part.ux[i] = spec -> part.ux[--spec -> np];
+                spec -> part.uy[i] = spec -> part.uy[--spec -> np];
+                spec -> part.uz[i] = spec -> part.uz[--spec -> np];
+                continue;
+            }
+            i++;
         }
-
-        _spec_npush += spec -> np;
-        _spec_time += timer_interval_seconds(t0, timer_ticks());
+    } else {
+        for (int i=0; i<spec->np; i++) {
+            spec-> part.ix[i] += ((spec -> part.ix[i] < 0 ) ? nx0 : 0) -(( spec -> part.ix[i] >= nx0 ) ? nx0 : 0);
+        }
     }
+
+    /*
+    // Sorting disabled for this simulation
+    if (spec -> n_sort > 0) {
+        if (!(spec -> iter % spec -> n_sort)) spec_sort(spec);
+    }
+    */
+
+    _spec_npush += spec -> np;
+    _spec_time += timer_interval_seconds(t0, timer_ticks());
+    
 }
 
 /*********************************************************************************************
@@ -1622,7 +1607,7 @@ void spec_rep_pha( const t_species *spec, const int rep_type,
     zdf_save_grid( (void *) buf, zdf_float32, &info, &iter, path );
 
     // Free temp. buffer
-    free( buf );
+    free(buf);
 }
 
 /**

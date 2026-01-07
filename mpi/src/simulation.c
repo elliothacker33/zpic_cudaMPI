@@ -45,25 +45,33 @@ int report(int n, int ndump){
  */
 void sim_iter(t_simulation* sim){
 	
-	int rank; 
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
 	// Zero current density
 	current_zero(&sim -> current);
 	
 	// Advance particles
-	for (int i = 0; i<sim -> n_species; i++)
-		spec_advance(&sim -> species[i], &sim -> emf, &sim -> current);
+	for (int i = 0; i<sim -> n_species; i++) spec_advance(&sim -> species[i], &sim -> emf, &sim -> current);
 
-	if (rank == 0){
-		// Update current boundary conditions and advance iteration
-		current_update(&sim -> current);
+	// Update current boundary conditions and advance iteration
+	current_update(&sim -> current);
 
-		// Renew current density in all ranks
+	// Renew current density in all ranks
+	// Advance EM fields
+	emf_advance(&sim -> emf, &sim -> current);
 
-		// Advance EM fields
-		emf_advance(&sim -> emf, &sim -> current);
-	}
+}
+
+
+void sim_iter_gpu(t_simulation* sim){
+
+	// Zero current density 
+	kernel_zero_current<<< , >>> ();
+
+	// Advance particles
+	for (int i = 0; i < sim -> n_species; i++) kernel_spec_advance<<< , >>>
+
+	// Update current boundary conditions and advance iteration
+	kernel_current_update<<< , >>>
+
 }
 
 /**

@@ -16,7 +16,6 @@
 #include <string.h>
 #include <math.h>
 #include <omp.h>
-#include <mpi.h>
 
 // ZPIC headers
 #include "../lib/emf.h"
@@ -455,7 +454,7 @@ void mur_abc(t_emf *emf) {
  * @param emf 	EM fields
  * @param dt 	Time step
  */
-void yee_b( t_emf *emf, const float dt )
+void yee_b(t_emf *emf, const float dt)
 {
     float* const restrict B_y = emf -> B_y;
     float* const restrict B_z = emf -> B_z;
@@ -605,26 +604,26 @@ void emf_advance( t_emf *emf, const t_current *current )
 	const float dt = emf->dt;
 
 	// Advance EM field using Yee algorithm modified for having E and B time centered
-	yee_b( emf, dt/2.0f );
+	yee_b(emf, dt/2.0f);
 
-	yee_e( emf, current, dt );
+	yee_e(emf, current, dt);
 
     // Process open boundaries if needed
-    if ( emf->bc_type == EMF_BC_OPEN ) mur_abc( emf );
+    if (emf->bc_type == EMF_BC_OPEN) mur_abc(emf);
 
-	yee_b( emf, dt/2.0f );
+	yee_b(emf, dt/2.0f);
 
 	// Update guard cells
-	emf_update_gc( emf );
+	emf_update_gc(emf);
 
 	// Update contribuition of external fields if necessary
-	emf_update_part_fld( emf );
+	emf_update_part_fld(emf);
 
 	// Advance internal iteration number
     emf -> iter += 1;
 
     // Move simulation window if needed
-    if ( emf -> moving_window ) emf_move_window( emf );
+    if (emf -> moving_window) emf_move_window( emf );
 
     // Update timing information
 	_emf_time += timer_interval_seconds(t0, timer_ticks());

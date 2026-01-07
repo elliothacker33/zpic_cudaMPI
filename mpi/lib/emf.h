@@ -264,6 +264,6 @@ void emf_advance( t_emf *emf, const t_current *current );
  * 
  * @return double 	Time spent in seconds
  */
-double emf_time( void );
+double emf_time(void);
 
 #endif

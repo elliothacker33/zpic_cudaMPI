@@ -1,10 +1,7 @@
-/* 
- *  current.h
- *  zpic
- *
- *  Created by Ricardo Fonseca on 12/8/10.
- *  Copyright 2010 Centro de Física dos Plasmas. All rights reserved.
- *
+/**
+ * @file current.h
+ * @author Diogo Silva, Ricardo Fonseca, Tomás Pereira
+ * @brief Eletric current density header
 */
 
 #ifndef __CURRENT__
@@ -140,10 +137,5 @@ void kernel_tmpbuf_init(int nx);
  * @brief Free the temporary buffer (call once after simulation ends)
 */
 void kernel_tmpbuf_cleanup();
-
-/**
- * @brief Return pointer to temporary buffer
-*/
-float3Buffer* kernel_tmpbuf_get();
 
 #endif
