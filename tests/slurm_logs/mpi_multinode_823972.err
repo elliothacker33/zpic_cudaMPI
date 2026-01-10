@@ -1,0 +1,9 @@
+In file included from src/main.c:33:
+src/input/twostream.c:13:10: fatal error: ../lib/simulation.h: No such file or directory
+   13 | #include "../lib/simulation.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+src/particles.c: In function ‘spec_advance’:
+src/particles.c:1031:9: warning: unused variable ‘num_threads’ [-Wunused-variable]
+ 1031 |     int num_threads   = omp_get_max_threads();
+      |         ^~~~~~~~~~~

@@ -1,0 +1,11 @@
+=== ZPIC MPI Multi-Node Run ===
+Nodes: 2
+MPI Ranks: 8
+OpenMP Threads per rank: 12
+Date: 2026-01-10_16-40-12
+===============================
+
+slurmstepd: error: *** STEP 823997.0 ON cna1083 CANCELLED AT 2026-01-10T16:40:24 ***
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+srun: error: cna1083: tasks 0-3: Killed
+srun: error: cna1084: tasks 4-7: Killed

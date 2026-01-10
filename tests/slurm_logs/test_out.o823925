@@ -1,0 +1,45 @@
+[STARTING] Loading modules
+[LOAD_MODULE] GCC/13.3.0
+[LOAD_MODULE] LLVM/19
+[LOAD_MODULE] OpenMPI/5.0.3-GCC-13.3.0
+ZPIC kernel will be run with 12 cores
+Running perf stat with 12 cores
+
+Simulation ended.
+
+Time for spec. advance = 1.188234 s
+Time for emf   advance = 0.001209 s
+Total simulation time  = 1.189752 s
+
+Particle advance [nsec/part] = 19.764371 
+Particle advance [Mpart/sec] = 50.596095 
+Starting simulation ...
+
+n = 0, t = 0.0
+Allocating 12 threads
+Allocating 12 threads
+Energy (fields | particles | total) = 3.535198e-07 4.977628e-01 4.977632e-01
+n = 501, t = 50.100002
+Energy (fields | particles | total) = 2.474965e-02 4.751558e-01 4.999054e-01
+Initial energy: 4.977632e-01, Final energy: 4.999054e-01
+
+Final energy different from Initial Energy. Change in total energy is: 0.43 % 
+
+ Performance counter stats for './zpic':
+
+         14,353.07 msec task-clock                #   11.314 CPUs utilized          
+               248      context-switches          #    0.017 K/sec                  
+                12      cpu-migrations            #    0.001 K/sec                  
+               107      page-faults               #    0.007 K/sec                  
+    28,704,635,876      cycles                    #    2.000 GHz                    
+    12,214,122,890      instructions              #    0.43  insn per cycle         
+   <not supported>      branches                                                    
+        27,802,639      branch-misses                                               
+
+       1.268578547 seconds time elapsed
+
+      14.325209000 seconds user
+       0.030010000 seconds sys
+
+
+Perf stats saved to tests/perf/perf_stat_12_threads.txt
