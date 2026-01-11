@@ -21,11 +21,11 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <cuda_runtime.h>
 
 // ZPIC headers
 #include "../lib/zpic.h"
 #include "../lib/simulation.h"
+#include "../lib/gpu_kernels.h"
 #include "../lib/emf.h"
 #include "../lib/current.h"
 #include "../lib/particles.h"
@@ -34,21 +34,15 @@ along with the ZPIC Educational code suite. If not, see <http://www.gnu.org/lice
 // Include Simulation parameters here
 #include "input/twostream.c"
 
-// Graph deploys kernels faster than the typical kernel launch
-cudaGraph_t graph;
-cudaGraphExec_t graph_exec;
-bool graph_created = false;
-
 int main (int argc, const char * argv[]) {
 
     // 1. CPU Initialization
-    
     // Initialize simulation
     t_simulation sim;
     sim_init(&sim);
 
-    // Choose CPU or GPU
-    sim.arch = SIM_CPU;
+    // Create gpu context
+    alloc_gpu_ctx(&sim);
 
     // Main loop variables
     int n;
@@ -61,64 +55,33 @@ int main (int argc, const char * argv[]) {
     t0 = timer_ticks();
     printf("n = 0, t = 0.0\n");
 
-    if (sim.arch == SIM_CPU){
-        // CPU specific context
-        printf("Initializing CPU structures ...\n");
-        // Temporary buffer for parallelism in current deposition
-        kernel_tmpbuf_init(sim.current.nx);
-    }
-    // Create GPU context
-    else if (sim.arch == SIM_GPU){
-        // GPU specific context
-        // Initialize GPU structures
-        printf("Initializing GPU structures ...\n");
-        gpu_init(&sim);
-        printf("GPU structures initialized\n");
-    }
+    // Init static buffers at current
+    kernel_tmpbuf_init(sim.current.nx);
     
-    // 2. GPU Handles Simulation
+    // 2. GPU Handles Simulation <spec_advance only>
+    // The cost of communication is negligible for this simulation
     // Main loop
     for (n=0,t=0.0; t<=sim.tmax; n++, t=n*sim.dt){
         
         // Report before iteration
-        //if (report(n, sim.ndump) && sim.arch == SIM_CPU) sim_report(&sim);
+        if (report(n, sim.ndump)) sim_report(&sim);
         
-        // Create graph
-        if (!graph_created){
-            
-            // Capture the graph
-            cudaStreamBeginCapture(stream, cudaStreamCaptureModeGlobal);
-
-            // Capture the graph
-            sim_iter(&sim);
-
-            // Cuda stop the capture
-            cudaStreamEndCapture(stream, &graph);
-            cudaGraphInstantiate(&graph_exec, graph, NULL, NULL, 0);
-            graph_created = true;
-        }
+        // Capture the graph
+        sim_iter(&sim);
         
-        /*
         // Report after iteration (only first iteration)        
         if (n==0){
             sim_report_energy_ret(&sim, &en_in);
             sim_report_energy (&sim);
         }
-        */
+        
     }
+    
+    // Free GPU context
+    free_gpu_ctx();
 
-    // GPU Copy back and Cleanup memory
-    if (sim.arch == SIM_GPU){
-        printf("Cleaning GPU memory ...\n");
-        gpu_copy_and_cleanup(&sim);
-        printf("GPU cleanup done\n");
-    }
-    else if (sim.arch == SIM_CPU){
-        printf("Cleaning CPU memory ...\n");
-        // Cleanup temporary buffer
-        kernel_tmpbuf_cleanup();
-        printf("CPU cleanup done\n");
-    }
+    // Delete static buffer at current
+    kernel_tmpbuf_cleanup();
 
     // 3. CPU Cleanup and Reports
     printf("n = %i, t = %f\n",n,t);

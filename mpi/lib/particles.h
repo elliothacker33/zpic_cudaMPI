@@ -87,9 +87,8 @@ enum part_boundary {
  */
 typedef struct Species {
 	
-		
 	/// Species name
-	char name[MAX_SPNAME_LEN+1];
+	char name[MAX_SPNAME_LEN+1]; // NU
 
 	// Particles
 	t_part_buffer part;	///< Particle buffer
@@ -97,22 +96,21 @@ typedef struct Species {
 	int np_max;		///< Maximum number of particles in buffer
 
 	/// mass over charge ratio
-	float m_q;
+	float m_q; // U
 
 	/// total kinetic energy
-	double energy;
+	double energy; // U
 
 	/// charge of individual particle
-	float q;
+	float q; // U
 
 	/// Number of particles per cell
 	int ppc;
-	
-	// J_local
-	int is_init;
 
-	float3Buffer* J_local_per_thread;
 	float3Buffer net_u;
+
+	// Send partticles buffer to gpu if realloc happened (0: don't send, 1: send)
+	int send_particles_gpu;
 
 	/// Density profile to inject
 	t_density density;
@@ -199,8 +197,9 @@ void spec_grow_buffer( t_species* spec, const int size );
  * @param spec      Particle species
  * @param emf       EM fields
  * @param current   Current density
+ * @param idx       Index of the species to update
  */
-void spec_advance( t_species* spec, t_emf* emf, t_current* current );
+void spec_advance( t_species* spec, t_emf* emf, t_current* current, int idx);
 
 /**
  * @brief Returns the total time spent pushing particles (includes boundaries and moving window)
@@ -252,8 +251,8 @@ double spec_perf( void );
  * @param pha_range Physical range of each of the phasespace axis
  * @param buf       Phasespace density grid
  */
-void spec_deposit_pha( const t_species *spec, const int rep_type,
-			  const int pha_nx[], const float pha_range[][2], float* buf );
+void spec_deposit_pha(  const t_species *spec, const int rep_type,
+              const int pha_nx[], const float pha_range[][2], float* buf );
 
 /**
  * @brief Deposits particle species charge density

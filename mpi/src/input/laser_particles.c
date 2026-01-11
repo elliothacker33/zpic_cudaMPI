@@ -9,7 +9,7 @@
 
 #include "../lib/simulation.h"
 
-void sim_init( t_simulation* sim ){
+void sim_init(t_simulation* sim){
 
 	// Time step
 	float dt = 0.00095;
@@ -32,10 +32,10 @@ void sim_init( t_simulation* sim ){
 	t_density density = { .type = STEP, .start = 54.0 };//55
 
 	t_species* species = (t_species *) malloc( n_species * sizeof( t_species ));
-	spec_new( &species[0], "electrons", -1.0, ppc, NULL, NULL, nx, box, dt, &density );
+	spec_new(&species[0], "electrons", -1.0, ppc, NULL, NULL, nx, box, dt, &density);
 
 	// Initialize Simulation data
-	sim_new( sim, nx, box, dt, tmax, ndump, species, n_species );
+	sim_new(sim, nx, box, dt, tmax, ndump, species, n_species);
 
 	// Add laser pulse (this must come after sim_new)
 	t_emf_laser laser = {
@@ -45,10 +45,10 @@ void sim_init( t_simulation* sim ){
 		.omega0 = 10.0,
 		.polarization = M_PI_2
     };
-	sim_add_laser( sim, &laser );
+	sim_add_laser(sim, &laser);
 
 	// Set moving window (this must come after sim_new)
-	sim_set_moving_window( sim );
+	sim_set_moving_window(sim);
 
 	// Set current smoothing (this must come after sim_new)
 	t_smooth smooth = {
@@ -56,12 +56,12 @@ void sim_init( t_simulation* sim ){
 		.xlevel = 4
 	};
 
-	sim_set_smooth( sim, &smooth );
+	sim_set_smooth(sim, &smooth);
 
 }
 
 
-void sim_report( t_simulation* sim ){
+void sim_report(t_simulation* sim){
 
 	// All electric field components
 	//emf_report( &sim->emf, EFLD, 0 );

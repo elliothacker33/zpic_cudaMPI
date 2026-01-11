@@ -49,7 +49,7 @@ void sim_iter(t_simulation* sim){
 	current_zero(&sim -> current);
 	
 	// Advance particles
-	for (int i = 0; i<sim -> n_species; i++) spec_advance(&sim -> species[i], &sim -> emf, &sim -> current);
+	for (int i = 0; i<sim -> n_species; i++) spec_advance(&sim -> species[i], &sim -> emf, &sim -> current, i);
 
 	// Update current boundary conditions and advance iteration
 	current_update(&sim -> current);
@@ -60,19 +60,6 @@ void sim_iter(t_simulation* sim){
 
 }
 
-
-void sim_iter_gpu(t_simulation* sim){
-
-	// Zero current density 
-	kernel_zero_current<<< , >>> ();
-
-	// Advance particles
-	for (int i = 0; i < sim -> n_species; i++) kernel_spec_advance<<< , >>>
-
-	// Update current boundary conditions and advance iteration
-	kernel_current_update<<< , >>>
-
-}
 
 /**
  * @brief Prints out report on simulation timings

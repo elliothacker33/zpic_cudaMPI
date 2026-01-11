@@ -26,7 +26,7 @@
  * @param size Number of elements in the buffer
  * The SoA format allows for better vectorization and cache efficiency
  */
-void alloc_float3Buffer(float3Buffer* buffer, size_t size) {
+void alloc_float3Buffer(float3Buffer* buffer, int size) {
 
     // Total size for the chunk (x,y,z)
     int total_chunk_size = size * 3 * sizeof(float);
@@ -50,7 +50,7 @@ void alloc_float3Buffer(float3Buffer* buffer, size_t size) {
  * @param value Value to set the buffer to
  * We use this to set values to zero usually 
 */
-void mem_set_float3Buffer(float3Buffer* buffer, size_t size, float value) {
+void mem_set_float3Buffer(float3Buffer* buffer, int size, float value) {
    
    if (buffer->chunk_xyz == NULL) {
        fprintf(stderr, "Buffer is not allocated\n");

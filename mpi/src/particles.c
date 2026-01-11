@@ -22,6 +22,7 @@
 #include "../lib/current.h"
 #include "../lib/zdf.h"
 #include "../lib/timer.h"
+#include "../lib/gpu_kernels.h"
 
 static double _spec_time = 0.0;
 static uint64_t _spec_npush = 0;
@@ -91,7 +92,7 @@ void spec_set_u(t_species* spec, const int start, const int end){
 
     // Accumulate momentum in each cell
     for (int i = start; i <= end; i++) {
-        const int idx  =  part_ix[i];
+        const int idx = part_ix[i];
 
         net_u_x[idx] += part_ux[i];
         net_u_y[idx] += part_uy[i];
@@ -102,10 +103,8 @@ void spec_set_u(t_species* spec, const int start, const int end){
 
     // Normalize to the number of particles in each cell to get the
     // average momentum in each cell
-    #pragma omp parallel for
-    for(int i = 0; i< spec->nx; i++ ) {
-        const float norm = (npc[ i ] > 0) ? 1.0f/npc[i] : 0;
-
+    for(int i = 0; i< spec->nx; i++) {
+        const float norm = (npc[i] > 0) ? 1.0f/npc[i] : 0;
         net_u_x[i] *= norm;
         net_u_y[i] *= norm;
         net_u_z[i] *= norm;
@@ -114,7 +113,6 @@ void spec_set_u(t_species* spec, const int start, const int end){
     // Subtract average momentum and add fluid component
     for (int i = start; i <= end; i++) {
         const int idx  = part_ix[i];
-
         part_ux[i] += spec -> ufl[0] - net_u_x[idx];
         part_uy[i] += spec -> ufl[1] - net_u_y[idx];
         part_uz[i] += spec -> ufl[2] - net_u_z[idx];
@@ -492,6 +490,7 @@ void spec_grow_buffer( t_species* spec, const int size ) {
     spec->part.ux = aligned_realloc(spec -> part.ux, spec -> np_max * sizeof(float), old_np_max * sizeof(float), 256);
     spec->part.uy = aligned_realloc(spec -> part.uy, spec -> np_max * sizeof(float), old_np_max * sizeof(float), 256);
     spec->part.uz = aligned_realloc(spec -> part.uz, spec -> np_max * sizeof(float), old_np_max * sizeof(float), 256);
+
 }
 
 /**
@@ -502,12 +501,12 @@ void spec_grow_buffer( t_species* spec, const int size ) {
  * @param   spec    Particle species
  * @param   range   Grid range [ix0, ix1] where to inject particles
  **/
-void spec_inject_particles( t_species* spec, const int range[] )
+void spec_inject_particles(t_species* spec, const int range[] )
 {
     int start = spec -> np;
 
     // Get maximum number of particles to inject
-    int np_inj = spec_np_inj( spec, range );
+    int np_inj = spec_np_inj(spec, range);
 
     // Check if buffer is large enough and if not reallocate
        // Increase by chunks of 1024 particles
@@ -515,7 +514,6 @@ void spec_inject_particles( t_species* spec, const int range[] )
     if (size > spec -> np_max) {
         spec_grow_buffer(spec, size);
     }
-
 
     // Set particle positions
     spec_set_x(spec, range);
@@ -570,7 +568,6 @@ void spec_new( t_species* spec, char name[], const float m_q, const int ppc,
     spec->part.ux = NULL;
     spec->part.uy = NULL;
     spec->part.uz = NULL;
-    spec->is_init = 0;
 
     // Initialize density profile
     if (density){
@@ -613,12 +610,6 @@ void spec_new( t_species* spec, char name[], const float m_q, const int ppc,
 
     spec_inject_particles(spec, range);
 
-    // Create local buffers local
-    int nthreads = omp_get_max_threads(); // or omp_get_max_threads();
-    float3Buffer* J_local_per_thread = malloc(nthreads * sizeof(float3Buffer));
-
-    spec->J_local_per_thread = J_local_per_thread;
-
     // Set default sorting frequency
     spec -> n_sort = 100000;
 
@@ -643,7 +634,7 @@ void spec_move_window(t_species *spec){
         // particles leaving the box will be removed later
         int i;
         #pragma omp parallel for
-        for( i = 0; i < spec->np; i++ ) {
+        for(i = 0; i < spec->np; i++) {
             spec->part.ix[i]--;
         }
 
@@ -663,16 +654,7 @@ void spec_move_window(t_species *spec){
  *
  * @param spec Particle species
  */
-void spec_delete(t_species* spec)
-{
-    int num_threads = omp_get_max_threads();
-    for (int i = 0; i < num_threads; i++) {
-        free_float3Buffer(&spec->J_local_per_thread[i]);
-    }
-
-    spec->is_init = 0;
-    free(spec->J_local_per_thread);
-
+void spec_delete(t_species* spec){
     free(spec->part.ix);
     free(spec->part.x);
     free(spec->part.ux);
@@ -829,7 +811,7 @@ void dep_current_zamb( int ix0, int di,
         S1x[0] = 1.0f - vp[k].x1;
         S1x[1] = vp[k].x1;
 
-        J_0x[ vp[k].ix     ] += qnx * vp[k].dx;
+        J_0x[vp[k].ix] += qnx * vp[k].dx;
         J_0y[ vp[k].ix     ] += vp[k].qvy * (S0x[0]+S1x[0]+(S0x[0]-S1x[0])/2.0f);
         J_0y[ vp[k].ix + 1 ] += vp[k].qvy * (S0x[1]+S1x[1]+(S0x[1]-S1x[1])/2.0f);
         J_0z[ vp[k].ix     ] += vp[k].qvz * (S0x[0]+S1x[0]+(S0x[0]-S1x[0])/2.0f);
@@ -966,256 +948,54 @@ int ltrim( float x )
  * @param emf       EM fields
  * @param current   Current density
  */
-void spec_advance(t_species* spec, t_emf* emf, t_current* current){
+void spec_advance(t_species* spec, t_emf* emf, t_current* current, int species_idx){
     
-    // Only rank 0 will do the timing
     uint64_t t0;
     t0 = timer_ticks();
-    
-    // Common variables in all ranks
-    const float tem   = 0.5 * spec->dt/spec -> m_q; 
-    const float dt_dx = spec->dt / spec->dx;
-    const float qnx = spec -> q *  spec->dx / spec->dt;
 
-    // Number of threads per rank
-    int num_threads = omp_get_max_threads();
+    double energy_gpu = spec_advance_gpu(spec, emf, current, species_idx);
 
-    double energy = 0;
-
-    // Size of chunk to iterate over
+    // Particle buffers
     int* restrict const part_ix = spec -> part.ix;
     float* restrict const part_x = spec -> part.x;
     float* restrict const part_ux = spec -> part.ux;
     float* restrict const part_uy = spec -> part.uy;
     float* restrict const part_uz = spec -> part.uz;
-    float* restrict const E_part_x = emf -> E_part_x;
-    float* restrict const E_part_y = emf -> E_part_y;
-    float* restrict const E_part_z = emf -> E_part_z;
-    float* restrict const B_part_x = emf -> B_part_x;
-    float* restrict const B_part_y = emf -> B_part_y;
-    float* restrict const B_part_z = emf -> B_part_z;
-
-    // Grid size including guard cells
-    const int current_size = current->nx + current->gc[0] + current->gc[1];
-
-    // Initialize locals if first time
-    if (spec->is_init == 0) {
-        printf("Allocating %d threads\n", num_threads);
-        spec->is_init = 1;
-        for (int i = 0; i < num_threads; i++) {
-            alloc_float3Buffer(&spec->J_local_per_thread[i], current_size);
-        }
-    }
-
-    #pragma omp parallel reduction(+:energy)
-    {
-        int tid = omp_get_thread_num();
-        float* restrict const J_local_x = spec->J_local_per_thread[tid].x;
-        float* restrict const J_local_y = spec->J_local_per_thread[tid].y;
-        float* restrict const J_local_z = spec->J_local_per_thread[tid].z;
-
-        mem_set_float3Buffer(&spec->J_local_per_thread[tid], current_size, 0.0f);
-        double energy_thread = 0;
-
-        #pragma omp for
-        for (int i=0; i < spec->np; i++) {
-
-            float3 Ep, Bp;
-            float utx, uty, utz;
-            float ux, uy, uz, u2;
-            float gamma, rg, gtem, otsq;
-            float x1;
-            int di;
-            float dx;
-
-            ux = part_ux[i];
-            uy = part_uy[i];
-            uz = part_uz[i];
-
-            int iz, ih;
-            float w1, w1h;
-
-            iz = part_ix[i];
-
-            w1 = part_x[i];
-            ih = (w1 < 0.5f)? -1 : 0;
-            w1h = w1 + ((w1 <0.5f)?0.5f:-0.5f);
-
-            ih += iz;
-
-            Ep.x = E_part_x[ih] * (1.0f - w1h) + E_part_x[ih+1]* w1h;
-            Ep.y = E_part_y[iz] * (1.0f -  w1) + E_part_y[iz+1] * w1;
-            Ep.z = E_part_z[iz] * (1.0f -  w1) + E_part_z[iz+1] * w1;
-
-            Bp.x = B_part_x[iz] * (1.0f  - w1) + B_part_x[iz+1] * w1;
-            Bp.y = B_part_y[ih] * (1.0f - w1h) + B_part_y[ih+1] * w1h;
-            Bp.z = B_part_z[ih] * (1.0f - w1h) + B_part_z[ih+1] * w1h;
-
-            Ep.x *= tem;
-            Ep.y *= tem;
-            Ep.z *= tem;
-
-            utx = ux + Ep.x;
-            uty = uy + Ep.y;
-            utz = uz + Ep.z;
-
-            u2 = utx*utx + uty*uty + utz*utz;
-            gamma = sqrtf(1 + u2);
-
-            energy_thread += u2 / ( 1 + gamma );
-
-            gtem = tem / gamma;
-
-            Bp.x *= gtem;
-            Bp.y *= gtem;
-            Bp.z *= gtem;
-
-            otsq = 2.0f / ( 1.0f + Bp.x*Bp.x + Bp.y*Bp.y + Bp.z*Bp.z );
-
-            ux = utx + uty*Bp.z - utz*Bp.y;
-            uy = uty + utz*Bp.x - utx*Bp.z;
-            uz = utz + utx*Bp.y - uty*Bp.x;
-
-            Bp.x *= otsq;
-            Bp.y *= otsq;
-            Bp.z *= otsq;
-
-            utx += uy*Bp.z - uz*Bp.y;
-            uty += uz*Bp.x - ux*Bp.z;
-            utz += ux*Bp.y - uy*Bp.x;
-
-            ux = utx + Ep.x;
-            uy = uty + Ep.y;
-            uz = utz + Ep.z;
-
-            part_ux[i] = ux;
-            part_uy[i] = uy;
-            part_uz[i] = uz;
-
-            rg = 1.0f / sqrtf(1.0f + ux*ux + uy*uy + uz*uz);
-            dx = dt_dx * rg * ux;
-            x1 = part_x[i] + dx;
-            di = ltrim(x1);
-            x1 -= di;
-
-            float qvy = spec->q * uy * rg;
-            float qvz = spec->q * uz * rg;
-
-            // Deposit in LOCAL buffer (inline of dep_current_zamb)
-            int ix0 = spec->part.ix[i];
-            float x0 = spec -> part.x[i];
-
-            typedef struct {float x0, x1, dx, qvy, qvz; int ix;} t_vp;
-            t_vp vp[3];
-            int vnp = 1;
-
-            vp[0].x0 = x0;
-            vp[0].dx = dx;
-            vp[0].x1 = x0+dx;
-            vp[0].qvy = qvy/2.0;
-            vp[0].qvz = qvz/2.0;
-            vp[0].ix = ix0;
-
-            if ( di != 0 ) {
-                int ib = ( di == 1 );
-                float delta = (x0+dx-ib)/dx;
-
-                vp[1].x0 = 1-ib;
-                vp[1].x1 = (x0 + dx) - di;
-                vp[1].dx = dx*delta;
-                vp[1].ix = ix0 + di;
-                vp[1].qvy = vp[0].qvy*delta;
-                vp[1].qvz = vp[0].qvz*delta;
-
-                vp[0].x1 = ib;
-                vp[0].dx *= (1.0f-delta);
-                vp[0].qvy *= (1.0f-delta);
-                vp[0].qvz *= (1.0f-delta);
-
-                vnp++;
-            }
-
-            // Deposit in LOCAL buffers
-            for (int k = 0; k < vnp; k++) {
-                float S0x[2], S1x[2];
-                S0x[0] = 1.0f - vp[k].x0;
-                S0x[1] = vp[k].x0;
-                S1x[0] = 1.0f - vp[k].x1;
-                S1x[1] = vp[k].x1;
-
-                int idx = vp[k].ix + current->gc[0]; // offset para guard cells
-                J_local_x[idx] += qnx * vp[k].dx;
-                J_local_y[idx] += vp[k].qvy * (S0x[0]+S1x[0]+(S0x[0]-S1x[0])/2.0f);
-                J_local_y[idx + 1] += vp[k].qvy * (S0x[1]+S1x[1]+(S0x[1]-S1x[1])/2.0f);
-                J_local_z[idx] += vp[k].qvz * (S0x[0]+S1x[0]+(S0x[0]-S1x[0])/2.0f);
-                J_local_z[idx + 1] += vp[k].qvz * (S0x[1]+S1x[1]+(S0x[1]-S1x[1])/2.0f);
-            }
-
-            part_x[i] = x1;
-            part_ix[i] += di;
-        }
-
-
-        const int gc0 = current->gc[0];
-        const int n_cells = current->nx;
-        int block_size = 256;
-
-        float* restrict const J_0x = current->J_0x;
-        float* restrict const J_0y = current->J_0y;
-        float* restrict const J_0z = current->J_0z;
-
-        #pragma omp for nowait
-        for (int block = 0; block < n_cells; block += block_size) {
-            const int block_end = (block + block_size < n_cells) ? block + block_size : n_cells;
-            for (int t = 0; t < num_threads; t++) {
-            const float* restrict const J_total_x = spec->J_local_per_thread[t].x;
-            const float* restrict const J_total_y = spec->J_local_per_thread[t].y;
-            const float* restrict const J_total_z = spec->J_local_per_thread[t].z;
-                for (int j = block; j < block_end; j++){
-                    const int idx_local = gc0 + j;
-                    J_0x[j] += J_total_x[idx_local];
-                    J_0y[j] += J_total_y[idx_local];
-                    J_0z[j] += J_total_z[idx_local];
-                }
-            }
-        }
-        
-        energy += energy_thread;
-    } 
-
     const int nx0 = spec -> nx;
-    spec -> energy = spec-> q * spec -> m_q * energy * spec -> dx;
+
+    spec -> energy = spec-> q * spec -> m_q * energy_gpu * spec -> dx;
     spec -> iter += 1;
 
     // Boundary conditions (serial)
     if (spec -> moving_window || spec -> bc_type == PART_BC_OPEN){
-        if (spec -> moving_window ) spec_move_window(spec);
+        if (spec -> moving_window) spec_move_window(spec);
         int i = 0;
 
         while (i < spec -> np) {
-            if ((spec -> part.ix[i] < 0) || (spec -> part.ix[i] >= nx0)) {
-                spec -> part.ix[i] = spec -> part.ix[-- spec -> np];
-                spec -> part.x[i] = spec -> part.x[--spec -> np];
-                spec -> part.ux[i] = spec -> part.ux[--spec -> np];
-                spec -> part.uy[i] = spec -> part.uy[--spec -> np];
-                spec -> part.uz[i] = spec -> part.uz[--spec -> np];
+            if ((part_ix[i] < 0) || (part_ix[i] >= nx0)) {
+                part_ix[i] = part_ix[-- spec -> np];
+                part_x[i] = part_x[--spec -> np];
+                part_ux[i] = part_ux[--spec -> np];
+                part_uy[i] = part_uy[--spec -> np];
+                part_uz[i] = part_uz[--spec -> np];
                 continue;
             }
             i++;
         }
     } else {
-        for (int i=0; i<spec->np; i++) {
-            spec-> part.ix[i] += ((spec -> part.ix[i] < 0 ) ? nx0 : 0) -(( spec -> part.ix[i] >= nx0 ) ? nx0 : 0);
+        for (int i = 0; i < spec->np; i++){
+            part_ix[i] += ((part_ix[i] < 0) ? nx0 : 0) - ((part_ix[i] >= nx0) ? nx0 : 0);
         }
     }
-
-    /*
+    
     // Sorting disabled for this simulation
+    /*
     if (spec -> n_sort > 0) {
         if (!(spec -> iter % spec -> n_sort)) spec_sort(spec);
     }
     */
-
+    
+    // Report metrics
     _spec_npush += spec -> np;
     _spec_time += timer_interval_seconds(t0, timer_ticks());
     
@@ -1357,16 +1137,16 @@ void spec_rep_charge( const t_species *spec )
     memset( charge, 0, size );
 
     // Deposit the charge
-    spec_deposit_charge( spec, charge );
+    spec_deposit_charge(spec, charge);
 
     // Compact the data to save the file (throw away guard cells)
-    float buffer[ spec -> nx ];
+    float buffer[spec -> nx];
 
-    for ( int i = 0; i < spec->nx; i++ ) {
+    for (int i = 0; i < spec->nx; i++) {
         buffer[i] = charge[i];
     }
 
-    free( charge );
+    free(charge);
 
     // Set grid boundaries accounting for moving window
     t_zdf_grid_axis axis = {
@@ -1467,7 +1247,7 @@ const char * spec_pha_axis_units( int quant ) {
  * @param buf       Phasespace density grid
  */
 void spec_deposit_pha( const t_species *spec, const int rep_type,
-              const int pha_nx[], const float pha_range[][2], float* restrict buf)
+              const int pha_nx[], const float pha_range[][2], float* buf)
 {
     const int BUF_SIZE = 1024;
     float pha_x1[BUF_SIZE], pha_x2[BUF_SIZE];

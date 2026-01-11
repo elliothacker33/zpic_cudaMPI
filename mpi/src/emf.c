@@ -26,11 +26,7 @@
 #define GC_TOP 2
 #define GC_BOTTOM 1
 
-// Halo cells (Equal size on each side)
-#define HALO_SIZE 1
-
-
-/// Time spent advancing the EM fields
+// Time spent advancing the EM fields
 static double _emf_time = 0.0;
 
 /**
@@ -59,7 +55,7 @@ double emf_time(void){
  * @param box 	Physical box size
  * @param dt 	Simulation time step
  */
-void emf_new( t_emf *emf, int nx, float box, const float dt )
+void emf_new(t_emf *emf, int nx, float box, const float dt)
 {
 
 	// Number of guard cells for linear interpolation
@@ -598,8 +594,8 @@ void emf_move_window( t_emf *emf ){
  * @param emf 		EM fields
  * @param current 	Electric current density
  */
-void emf_advance( t_emf *emf, const t_current *current )
-{
+void emf_advance(t_emf *emf, const t_current *current){
+	
 	uint64_t t0 = timer_ticks();
 	const float dt = emf->dt;
 
@@ -640,7 +636,7 @@ void emf_advance( t_emf *emf, const t_current *current )
  * @param[in] emf EM field
  * @param[out] energy Energy values vector
  */
-void emf_get_energy( const t_emf *emf, double energy[] )
+void emf_get_energy(const t_emf *emf, double energy[])
 {
 	int i;
     float* const restrict E_x = emf -> E_x;

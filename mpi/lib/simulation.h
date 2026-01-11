@@ -4,18 +4,9 @@
 #include <stdint.h>
 
 #include "particles.h"
+#include "simulation_gpu.h"
 #include "emf.h"
 #include "current.h"
-
-/**
- * Make the code architecture independent to avoid different files
- * SIM_CPU - Running main simulation on CPU
- * SIM_GPU - Running main simulation on GPU
-*/
-typedef enum {
-	SIM_CPU,
-	SIM_GPU
-} t_sim_arch;
 
 /**
  * @brief EM1D PIC Simulation
@@ -29,11 +20,9 @@ typedef struct Simulation {
 
 	int ndump;		///< Diagnostic frequency
 
-	// Simulation architecture
-	t_sim_arch arch;
-	
 	// Simulation data
 	int n_species;			///< Number of particle species
+	gpu_context_t* d_gpu_ctx;	///< GPU simulation context
 	t_species* species;		///< Particle species
 	t_emf emf;				///< EM fields
 	t_current current;		///< Electric current density

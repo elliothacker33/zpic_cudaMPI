@@ -53,8 +53,6 @@ typedef struct Current {
 	int nx;			///< Number of grid points (excluding guard cells)
 	int gc[2];		///< Number of guard cells (lower/upper)
 	
-	size_t chunk_size;
-
 	float box;		///< Physical size of simulation box
 	
 	float dx;		///< Grid cell size
@@ -68,16 +66,6 @@ typedef struct Current {
 	enum current_boundary bc_type;	///< Type of boundary condition
 	
 } t_current;
-
-/**
- * @brief Allocates chunks of memory for other MPI ranks except rank 0 wich manages the whole buffer
- * @param current Current density object
- * @param chunk Chunk of memory to be allocated
- * @param nx Number of grid cells
- * @param gc0 Number of guard cells on the lower boundary
- * @param gc1 Number of guard cells on the upper boundary
- */
-void mpi_distributed_alloc_float3Buffer(t_current* current, float3Buffer* chunk, int nx, int gc0, int gc1);
 
 /**
  * @brief Function that runs binomial filter on current density object

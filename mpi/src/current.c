@@ -15,8 +15,8 @@
 #include "../lib/zpic.h"
 #include "../lib/current.h"
 
-#define GUARD_CELLS_L 1
-#define GUARD_CELLS_R 2
+#define GC_TOP 1
+#define GC_BOTTOM 2
 
 // Temporary buffer to help on kernel vectorization
 // If we dind't use this buffer, we would have to call alloc_float3Buffer for every kernel_x call
@@ -54,10 +54,10 @@ void current_smooth(t_current* const current);
 void current_new(t_current *current, int nx, float box, float dt){
     
     // Number of guard cells for linear interpolation
-    int gc[2] = {GUARD_CELLS_L, GUARD_CELLS_R}; 
+    int gc[2] = {GC_TOP, GC_BOTTOM}; 
     
     // Allocate global array
-    size_t size;
+    int size;
     size = gc[0] + nx + gc[1];
     
     // Allocate buffer
@@ -113,7 +113,7 @@ void current_delete(t_current *current){
 void current_zero(t_current *current){
     
     // Zero current density
-    size_t size = current->gc[0] + current->nx + current->gc[1];
+    int size = current->gc[0] + current->nx + current->gc[1];
     mem_set_float3Buffer(&current->J_buf, size, 0.0f);
     
 }
