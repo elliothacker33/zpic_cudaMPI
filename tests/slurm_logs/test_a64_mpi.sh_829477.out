@@ -1,0 +1,103 @@
+[PERF STAT] MPI=4 | OMP=12
+
+Simulation ended.
+
+Time for spec. advance = 0.865517 s
+Time for emf   advance = 0.001351 s
+Total simulation time  = 1.277987 s
+
+Particle advance [nsec/part] = 14.396490 
+Particle advance [Mpart/sec] = 69.461374 
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+Particles per cell (ppc) = 500
+Starting simulation (4 MPI ranks) ...
+
+n = 0, t = 0.0
+Allocating 12 threads
+Allocating 12 threads
+Energy (fields | particles | total) = 3.535198e-07 4.977628e-01 4.977632e-01
+n = 501, t = 50.100002
+Energy (fields | particles | total) = 2.475164e-02 4.753510e-01 5.001027e-01
+Initial energy: 4.977632e-01, Final energy: 5.001027e-01
+
+Final energy different from Initial Energy. Change in total energy is: 0.47 % 
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+
+ Performance counter stats for './zpic':
+
+          9,466.11 msec task-clock                #    2.638 CPUs utilized          
+            15,211      context-switches          #    0.002 M/sec                  
+                12      cpu-migrations            #    0.001 K/sec                  
+             1,347      page-faults               #    0.142 K/sec                  
+    18,868,111,492      cycles                    #    1.993 GHz                    
+    27,815,460,536      instructions              #    1.47  insn per cycle         
+   <not supported>      branches                                                    
+        15,906,521      branch-misses                                               
+
+       3.588264294 seconds time elapsed
+
+       8.429035000 seconds user
+       1.098075000 seconds sys
+
+
+
+ Performance counter stats for './zpic':
+
+         11,575.34 msec task-clock                #    3.079 CPUs utilized          
+            16,490      context-switches          #    0.001 M/sec                  
+                13      cpu-migrations            #    0.001 K/sec                  
+             1,347      page-faults               #    0.116 K/sec                  
+    23,078,116,053      cycles                    #    1.994 GHz                    
+    37,536,354,081      instructions              #    1.63  insn per cycle         
+   <not supported>      branches                                                    
+        17,950,754      branch-misses                                               
+
+       3.759178540 seconds time elapsed
+
+      10.377796000 seconds user
+       1.274642000 seconds sys
+
+
+
+ Performance counter stats for './zpic':
+
+          9,481.19 msec task-clock                #    2.598 CPUs utilized          
+            15,514      context-switches          #    0.002 M/sec                  
+                12      cpu-migrations            #    0.001 K/sec                  
+             1,360      page-faults               #    0.143 K/sec                  
+    18,897,232,881      cycles                    #    1.993 GHz                    
+    27,757,153,154      instructions              #    1.47  insn per cycle         
+   <not supported>      branches                                                    
+        16,599,467      branch-misses                                               
+
+       3.649122053 seconds time elapsed
+
+       8.454290000 seconds user
+       1.093489000 seconds sys
+
+
+
+ Performance counter stats for './zpic':
+
+          9,490.24 msec task-clock                #    2.637 CPUs utilized          
+            15,208      context-switches          #    0.002 M/sec                  
+                13      cpu-migrations            #    0.001 K/sec                  
+             1,347      page-faults               #    0.142 K/sec                  
+    18,916,917,988      cycles                    #    1.993 GHz                    
+    27,843,433,180      instructions              #    1.47  insn per cycle         
+   <not supported>      branches                                                    
+        15,957,704      branch-misses                                               
+
+       3.598638545 seconds time elapsed
+
+       8.328661000 seconds user
+       1.231990000 seconds sys
+
+

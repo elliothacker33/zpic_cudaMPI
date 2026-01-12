@@ -1,0 +1,26 @@
+=========================================
+[PERF STAT] ZPIC Hybrid MPI+OpenMP - A64FX
+=========================================
+MPI Ranks:      16
+OMP Threads:    12
+Total Cores:    192
+Nodes:          4
+=========================================
+
+Simulation ended.
+
+Time for spec. advance = 0.949930 s
+Time for emf   advance = 0.000945 s
+Total simulation time  = 2.871105 s
+
+Particle advance [nsec/part] = 15.800566 
+Particle advance [Mpart/sec] = 63.288874 
+Starting simulation (16 MPI ranks) ...
+
+n = 0, t = 0.0
+Energy (fields | particles | total) = 3.535234e-07 4.977628e-01 4.977632e-01
+n = 501, t = 50.100002
+Energy (fields | particles | total) = 2.701342e-02 4.733901e-01 5.004035e-01
+Initial energy: 4.977632e-01, Final energy: 5.004035e-01
+
+Final energy different from Initial Energy. Change in total energy is: 0.53 % 

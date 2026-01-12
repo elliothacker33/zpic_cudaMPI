@@ -1,0 +1,68 @@
+[RUN] MPI=16 | OMP=8 | ARCH=AMD
+----------------------------------------
+
+Simulation ended.
+
+Time for spec. advance = 0.454732 s
+Time for emf   advance = 0.000728 s
+Total simulation time  = 1.313908 s
+
+Particle advance [nsec/part] = 7.563739 
+Particle advance [Mpart/sec] = 132.209741 
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Starting simulation (16 MPI ranks) ...
+
+n = 0, t = 0.0
+Allocating 8 threads
+Allocating 8 threads
+Energy (fields | particles | total) = 3.535221e-07 4.977628e-01 4.977632e-01
+n = 501, t = 50.100002
+Energy (fields | particles | total) = 2.541900e-02 4.746625e-01 5.000815e-01
+Initial energy: 4.977632e-01, Final energy: 5.000815e-01
+
+Final energy different from Initial Energy. Change in total energy is: 0.46 % 
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads
+Particles per cell (ppc) = 500
+Allocating 8 threads
+Allocating 8 threads

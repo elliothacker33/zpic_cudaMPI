@@ -1,0 +1,8 @@
+[STARTING] Loading modules for AMD
+[LOAD_MODULE] GCC/13.3.0
+[LOAD_MODULE] LLVM/19
+cc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/zdf.c -o src/zdf.o
+cc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/current.c -o src/current.o
+cc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/simulation.c -o src/simulation.o
+cc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/particles.c -o src/particles.o
+[DONE] Compilation complete for AMD. Executable: zpic

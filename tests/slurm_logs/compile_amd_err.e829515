@@ -1,0 +1,5 @@
+src/particles.c:18:10: fatal error: mpi.h: No such file or directory
+   18 | #include <mpi.h>
+      |          ^~~~~~~
+compilation terminated.
+make: *** [Makefile:58: src/particles.o] Error 1

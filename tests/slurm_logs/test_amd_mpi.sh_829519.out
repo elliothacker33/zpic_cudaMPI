@@ -1,0 +1,1 @@
+[RUN] MPI=16 | OMP=8 | ARCH=AMD

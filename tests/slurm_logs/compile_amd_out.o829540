@@ -1,0 +1,21 @@
+[STARTING] Loading modules for AMD (MPI + OpenMP)
+[LOAD_MODULE] GCC/13.3.0
+[LOAD_MODULE] LLVM/19
+[LOAD_MODULE] OpenMPI/5.0.3-GCC-13.3.0
+mpicc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/zdf.c -o src/zdf.o
+mpicc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/current.c -o src/current.o
+mpicc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/simulation.c -o src/simulation.o
+mpicc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/particles.c -o src/particles.o
+mpicc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/main.c -o src/main.o
+mpicc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/random.c -o src/random.o
+mpicc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/zpic.c -o src/zpic.o
+mpicc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/emf.c -o src/emf.o
+mpicc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/timer.c -o src/timer.o
+OMP_NUM_THREADS=1  \
+OMP_PLACES=cores \
+OMP_PROC_BIND=close \
+mpicc -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp src/zdf.o src/current.o src/simulation.o src/particles.o src/main.o src/random.o src/zpic.o src/emf.o src/timer.o -lm -fopenmp -o zpic
+=====================================
+Compiling ZPIC using compiler: mpicc 
+make: Nothing to be done for 'Makefile'.
+[DONE] Compilation complete for AMD (MPI + OpenMP). Executable: zpic

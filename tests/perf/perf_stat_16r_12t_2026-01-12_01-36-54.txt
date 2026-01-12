@@ -1,0 +1,354 @@
+
+Simulation ended.
+
+Time for spec. advance = 1.002213 s
+Time for emf   advance = 0.000963 s
+Total simulation time  = 2.905096 s
+
+Particle advance [nsec/part] = 16.670210 
+Particle advance [Mpart/sec] = 59.987248 
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+
+ Performance counter stats for './zpic':
+
+          9,137.40 msec task-clock                #    1.496 CPUs utilized          
+            19,992      context-switches          #    0.002 M/sec                  
+                14      cpu-migrations            #    0.002 K/sec                  
+             1,359      page-faults               #    0.149 K/sec                  
+    18,192,160,693      cycles                    #    1.991 GHz                    
+    31,457,997,503      instructions              #    1.73  insn per cycle         
+   <not supported>      branches                                                    
+        12,184,516      branch-misses                                               
+
+       6.106497806 seconds time elapsed
+
+       8.066815000 seconds user
+       1.131675000 seconds sys
+
+
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+
+ Performance counter stats for './zpic':
+
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+          9,147.01 msec task-clock                #    1.546 CPUs utilized          
+            18,600      context-switches          #    0.002 M/sec                  
+
+ Performance counter stats for './zpic':
+
+                12      cpu-migrations            #    0.001 K/sec                  
+          9,103.49 msec task-clock                #    1.543 CPUs utilized          
+             1,370      page-faults               #    0.150 K/sec                  
+            18,488      context-switches          #    0.002 M/sec                  
+    18,217,385,856      cycles                    #    1.992 GHz                    
+    30,880,656,717      instructions              #    1.70  insn per cycle         
+                12      cpu-migrations            #    0.001 K/sec                  
+   <not supported>      branches                                                    
+        12,044,656      branch-misses                                               
+
+             1,360      page-faults               #    0.149 K/sec                  
+       5.917678386 seconds time elapsed
+
+       7.742757000 seconds user
+       1.455086000 seconds sys
+
+
+    18,131,714,327      cycles                    #    1.992 GHz                    
+    30,639,488,912      instructions              #    1.69  insn per cycle         
+   <not supported>      branches                                                    
+        13,288,198      branch-misses                                               
+
+       5.898470471 seconds time elapsed
+
+       7.995441000 seconds user
+       1.165368000 seconds sys
+
+
+
+ Performance counter stats for './zpic':
+
+          9,130.93 msec task-clock                #    1.548 CPUs utilized          
+            18,239      context-switches          #    0.002 M/sec                  
+                13      cpu-migrations            #    0.001 K/sec                  
+             1,361      page-faults               #    0.149 K/sec                  
+    18,187,141,105      cycles                    #    1.992 GHz                    
+    30,805,065,442      instructions              #    1.69  insn per cycle         
+   <not supported>      branches                                                    
+        12,068,271      branch-misses                                               
+
+       5.899436137 seconds time elapsed
+
+       7.884504000 seconds user
+       1.310748000 seconds sys
+
+
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+
+ Performance counter stats for './zpic':
+
+          9,160.76 msec task-clock                #    1.499 CPUs utilized          
+            20,014      context-switches          #    0.002 M/sec                  
+                12      cpu-migrations            #    0.001 K/sec                  
+             1,360      page-faults               #    0.148 K/sec                  
+    18,239,100,298      cycles                    #    1.991 GHz                    
+    31,480,209,375      instructions              #    1.73  insn per cycle         
+   <not supported>      branches                                                    
+        12,404,320      branch-misses                                               
+
+       6.109466443 seconds time elapsed
+
+       7.921625000 seconds user
+       1.298001000 seconds sys
+
+
+
+ Performance counter stats for './zpic':
+
+          9,114.43 msec task-clock                #    1.540 CPUs utilized          
+            18,775      context-switches          #    0.002 M/sec                  
+                14      cpu-migrations            #    0.002 K/sec                  
+             1,372      page-faults               #    0.151 K/sec                  
+    18,151,784,839      cycles                    #    1.992 GHz                    
+    30,795,768,067      instructions              #    1.70  insn per cycle         
+   <not supported>      branches                                                    
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+        12,085,158      branch-misses                                               
+
+       5.919509167 seconds time elapsed
+
+       7.693834000 seconds user
+       1.473954000 seconds sys
+
+
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+
+ Performance counter stats for './zpic':
+
+          9,146.86 msec task-clock                #    1.545 CPUs utilized          
+            18,625      context-switches          #    0.002 M/sec                  
+                13      cpu-migrations            #    0.001 K/sec                  
+             1,373      page-faults               #    0.150 K/sec                  
+    18,217,231,734      cycles                    #    1.992 GHz                    
+    30,846,145,673      instructions              #    1.69  insn per cycle         
+   <not supported>      branches                                                    
+        12,130,001      branch-misses                                               
+
+       5.921531481 seconds time elapsed
+
+       7.744169000 seconds user
+       1.461963000 seconds sys
+
+
+
+ Performance counter stats for './zpic':
+
+          9,188.86 msec task-clock                #    1.503 CPUs utilized          
+            19,967      context-switches          #    0.002 M/sec                  
+                13      cpu-migrations            #    0.001 K/sec                  
+             1,360      page-faults               #    0.148 K/sec                  
+    18,295,738,957      cycles                    #    1.991 GHz                    
+    31,736,503,014      instructions              #    1.73  insn per cycle         
+   <not supported>      branches                                                    
+        12,197,535      branch-misses                                               
+
+       6.112814963 seconds time elapsed
+
+       8.074996000 seconds user
+       1.178202000 seconds sys
+
+
+
+ Performance counter stats for './zpic':
+
+          9,126.25 msec task-clock                #    1.530 CPUs utilized          
+            18,844      context-switches          #    0.002 M/sec                  
+                16      cpu-migrations            #    0.002 K/sec                  
+             1,370      page-faults               #    0.150 K/sec                  
+    18,175,070,893      cycles                    #    1.992 GHz                    
+    31,579,719,389      instructions              #    1.74  insn per cycle         
+   <not supported>      branches                                                    
+        12,434,093      branch-misses                                               
+
+       5.966742966 seconds time elapsed
+
+       8.196569000 seconds user
+       0.989408000 seconds sys
+
+
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+
+ Performance counter stats for './zpic':
+
+          9,183.04 msec task-clock                #    1.549 CPUs utilized          
+            18,684      context-switches          #    0.002 M/sec                  
+                14      cpu-migrations            #    0.002 K/sec                  
+             1,372      page-faults               #    0.149 K/sec                  
+    18,287,462,768      cycles                    #    1.991 GHz                    
+    28,126,009,277      instructions              #    1.54  insn per cycle         
+   <not supported>      branches                                                    
+        17,672,465      branch-misses                                               
+
+       5.926890834 seconds time elapsed
+
+       7.180281000 seconds user
+       2.045357000 seconds sys
+
+
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+
+ Performance counter stats for './zpic':
+
+          8,863.59 msec task-clock                #    1.484 CPUs utilized          
+            14,111      context-switches          #    0.002 M/sec                  
+                13      cpu-migrations            #    0.001 K/sec                  
+             1,373      page-faults               #    0.155 K/sec                  
+    17,671,768,787      cycles                    #    1.994 GHz                    
+    31,489,792,285      instructions              #    1.78  insn per cycle         
+   <not supported>      branches                                                    
+        10,604,477      branch-misses                                               
+
+       5.971244863 seconds time elapsed
+
+       7.983274000 seconds user
+       0.924078000 seconds sys
+
+
+Particles per cell (ppc) = 500
+Starting simulation (16 MPI ranks) ...
+
+n = 0, t = 0.0
+Allocating 12 threads
+Allocating 12 threads
+Energy (fields | particles | total) = 3.535234e-07 4.977628e-01 4.977632e-01
+n = 501, t = 50.100002
+Energy (fields | particles | total) = 2.701342e-02 4.733901e-01 5.004035e-01
+Initial energy: 4.977632e-01, Final energy: 5.004035e-01
+
+Final energy different from Initial Energy. Change in total energy is: 0.53 % 
+
+ Performance counter stats for './zpic':
+
+          9,109.79 msec task-clock                #    1.525 CPUs utilized          
+            18,916      context-switches          #    0.002 M/sec                  
+                13      cpu-migrations            #    0.001 K/sec                  
+             1,371      page-faults               #    0.150 K/sec                  
+    18,141,063,939      cycles                    #    1.991 GHz                    
+    30,879,653,577      instructions              #    1.70  insn per cycle         
+   <not supported>      branches                                                    
+        12,755,095      branch-misses                                               
+
+       5.973472237 seconds time elapsed
+
+       8.152516000 seconds user
+       1.016643000 seconds sys
+
+
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+
+ Performance counter stats for './zpic':
+
+         13,136.42 msec task-clock                #    2.144 CPUs utilized          
+            23,922      context-switches          #    0.002 M/sec                  
+                13      cpu-migrations            #    0.001 K/sec                  
+             1,372      page-faults               #    0.104 K/sec                  
+    26,157,292,011      cycles                    #    1.991 GHz                    
+    46,936,171,314      instructions              #    1.79  insn per cycle         
+   <not supported>      branches                                                    
+        21,011,883      branch-misses                                               
+
+       6.125923311 seconds time elapsed
+
+      11.190291000 seconds user
+       2.028594000 seconds sys
+
+
+
+ Performance counter stats for './zpic':
+
+          8,948.38 msec task-clock                #    1.645 CPUs utilized          
+            17,039      context-switches          #    0.002 M/sec                  
+                12      cpu-migrations            #    0.001 K/sec                  
+             1,360      page-faults               #    0.152 K/sec                  
+    17,828,854,374      cycles                    #    1.992 GHz                    
+    28,126,505,592      instructions              #    1.58  insn per cycle         
+   <not supported>      branches                                                    
+        15,897,646      branch-misses                                               
+
+       5.440595253 seconds time elapsed
+
+       7.420854000 seconds user
+       1.564902000 seconds sys
+
+
+Particles per cell (ppc) = 500
+Allocating 12 threads
+Allocating 12 threads
+
+ Performance counter stats for './zpic':
+
+          9,123.40 msec task-clock                #    1.536 CPUs utilized          
+            18,521      context-switches          #    0.002 M/sec                  
+                14      cpu-migrations            #    0.002 K/sec                  
+             1,360      page-faults               #    0.149 K/sec                  
+    18,170,442,120      cycles                    #    1.992 GHz                    
+    30,714,283,301      instructions              #    1.69  insn per cycle         
+   <not supported>      branches                                                    
+        12,520,061      branch-misses                                               
+
+       5.940765738 seconds time elapsed
+
+       7.893258000 seconds user
+       1.275373000 seconds sys
+
+
+
+ Performance counter stats for './zpic':
+
+          9,166.30 msec task-clock                #    1.542 CPUs utilized          
+            18,301      context-switches          #    0.002 M/sec                  
+                12      cpu-migrations            #    0.001 K/sec                  
+             1,359      page-faults               #    0.148 K/sec                  
+    18,255,164,239      cycles                    #    1.992 GHz                    
+    28,187,641,145      instructions              #    1.54  insn per cycle         
+   <not supported>      branches                                                    
+        17,580,957      branch-misses                                               
+
+       5.945424491 seconds time elapsed
+
+       7.415270000 seconds user
+       1.801280000 seconds sys
+
+
