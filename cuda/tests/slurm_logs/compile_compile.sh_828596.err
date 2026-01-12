@@ -1,0 +1,12 @@
+src/../lib/zpic.h(36): error: type "float3" has already been defined (previous definition at line 401 of /eb/x86_64/software/CUDA/12.9.1/bin/../targets/x86_64-linux/include/vector_types.h)
+  } float3;
+    ^
+
+1 error detected in the compilation of "src/gpu_kernels.cu".
+make: *** [Makefile:38: build/gpu_kernels.o] Error 2
+src/../lib/zpic.h(36): error: type "float3" has already been defined (previous definition at line 401 of /eb/x86_64/software/CUDA/12.9.1/bin/../targets/x86_64-linux/include/vector_types.h)
+  } float3;
+    ^
+
+1 error detected in the compilation of "src/gpu_kernels.cu".
+make: *** [Makefile:38: build/gpu_kernels.o] Error 2

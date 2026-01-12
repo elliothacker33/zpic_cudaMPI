@@ -1,0 +1,15 @@
+nvcc -o zpic_cuda build/main.o build/timer.o build/particles.o build/current.o build/simulation.o build/zdf.o build/emf.o build/zpic.o build/random.o build/gpu_kernels.o -lm
+rm -rf build zpic_cuda
+nvcc -c src/main.c -O3 -g -std=c++11 -Wno-deprecated-gpu-targets -Ilib -o build/main.o
+nvcc -c src/timer.c -O3 -g -std=c++11 -Wno-deprecated-gpu-targets -Ilib -o build/timer.o
+nvcc -c src/particles.c -O3 -g -std=c++11 -Wno-deprecated-gpu-targets -Ilib -o build/particles.o
+nvcc -c src/current.c -O3 -g -std=c++11 -Wno-deprecated-gpu-targets -Ilib -o build/current.o
+nvcc -c src/simulation.c -O3 -g -std=c++11 -Wno-deprecated-gpu-targets -Ilib -o build/simulation.o
+nvcc -c src/zdf.c -O3 -g -std=c++11 -Wno-deprecated-gpu-targets -Ilib -o build/zdf.o
+nvcc -c src/emf.c -O3 -g -std=c++11 -Wno-deprecated-gpu-targets -Ilib -o build/emf.o
+nvcc -c src/zpic.c -O3 -g -std=c++11 -Wno-deprecated-gpu-targets -Ilib -o build/zpic.o
+nvcc -c src/random.c -O3 -g -std=c++11 -Wno-deprecated-gpu-targets -Ilib -o build/random.o
+nvcc -c src/gpu_kernels.cu -arch=sm_80 -O3 -Wno-deprecated-gpu-targets --use_fast_math -lineinfo -std=c++11 -Xcompiler -Wall,-Wextra -Ilib -o build/gpu_kernels.o
+nvcc -o zpic_cuda build/main.o build/timer.o build/particles.o build/current.o build/simulation.o build/zdf.o build/emf.o build/zpic.o build/random.o build/gpu_kernels.o -lm
+make: Nothing to be done for 'Makefile'.
+[DONE] Compilation complete. Executable: zpic

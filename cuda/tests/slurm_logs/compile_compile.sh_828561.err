@@ -1,0 +1,14 @@
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+In file included from src/main.c:27:
+src/../lib/simulation.h:7:10: fatal error: simulation_gpu.h: No such file or directory
+ #include "simulation_gpu.h"
+          ^~~~~~~~~~~~~~~~~~
+compilation terminated.
+make: *** [Makefile:34: build/main.o] Error 1
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+In file included from src/main.c:27:
+src/../lib/simulation.h:7:10: fatal error: simulation_gpu.h: No such file or directory
+ #include "simulation_gpu.h"
+          ^~~~~~~~~~~~~~~~~~
+compilation terminated.
+make: *** [Makefile:34: build/main.o] Error 1

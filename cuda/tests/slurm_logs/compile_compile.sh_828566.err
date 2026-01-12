@@ -1,0 +1,14 @@
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+In file included from src/main.c:28:
+src/../lib/gpu_kernels.h:79:57: error: unknown type name ‘bool’; did you mean ‘_Bool’?
+ void update_particles(int species_idx, t_species* spec, bool first_call);
+                                                         ^~~~
+                                                         _Bool
+make: *** [Makefile:34: build/main.o] Error 1
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+In file included from src/main.c:28:
+src/../lib/gpu_kernels.h:79:57: error: unknown type name ‘bool’; did you mean ‘_Bool’?
+ void update_particles(int species_idx, t_species* spec, bool first_call);
+                                                         ^~~~
+                                                         _Bool
+make: *** [Makefile:34: build/main.o] Error 1

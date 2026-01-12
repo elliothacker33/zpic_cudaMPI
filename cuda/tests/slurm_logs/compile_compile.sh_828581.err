@@ -1,0 +1,106 @@
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+src/../lib/zpic.h(36): error: type "float3" has already been defined (previous definition at line 401 of /eb/x86_64/software/CUDA/12.9.1/bin/../targets/x86_64-linux/include/vector_types.h)
+  } float3;
+    ^
+
+src/gpu_kernels.cu(247): error: identifier "MAX_VNPS" is undefined
+          for (int k = 0; k < MAX_VNPS; k++) {
+                              ^
+
+src/gpu_kernels.cu(294): error: identifier "i" is undefined
+      i
+      ^
+
+src/gpu_kernels.cu(295): error: expected a ";"
+      int tid = threadIdx.x;
+      ^
+
+src/gpu_kernels.cu(299): error: identifier "tid" is undefined
+      for (int i = tid; i < n_blocks; i += blockDim.x) {
+                   ^
+
+src/gpu_kernels.cu(305): error: identifier "tid" is undefined
+      if (tid == 0) *total_energy = sum;
+          ^
+
+src/gpu_kernels.cu(347): error: class "t_species_gpu" has no member "np_max"
+      h_spec_temp.np_max = alloc_size;
+                  ^
+
+src/gpu_kernels.cu(389): error: class "gpu_context_t" has no member "num_species"
+      h_gpu_ctx.num_species = sim->n_species;
+                ^
+
+src/gpu_kernels.cu(463): error: class "gpu_context_t" has no member "num_species"
+          for (int i = 0; i < h_gpu_ctx.num_species; i++) {
+                                        ^
+
+src/gpu_kernels.cu(488): error: identifier "first_call_flags" is undefined
+      if (first_call_flags) {
+          ^
+
+src/gpu_kernels.cu(545): error: class "gpu_context_t" has no member "num_species"
+          first_call_flags = (int*)calloc(h_gpu_ctx.num_species, sizeof(int));
+                                                    ^
+
+11 errors detected in the compilation of "src/gpu_kernels.cu".
+make: *** [Makefile:38: build/gpu_kernels.o] Error 2
+src/../lib/zpic.h(36): error: type "float3" has already been defined (previous definition at line 401 of /eb/x86_64/software/CUDA/12.9.1/bin/../targets/x86_64-linux/include/vector_types.h)
+  } float3;
+    ^
+
+src/gpu_kernels.cu(247): error: identifier "MAX_VNPS" is undefined
+          for (int k = 0; k < MAX_VNPS; k++) {
+                              ^
+
+src/gpu_kernels.cu(294): error: identifier "i" is undefined
+      i
+      ^
+
+src/gpu_kernels.cu(295): error: expected a ";"
+      int tid = threadIdx.x;
+      ^
+
+src/gpu_kernels.cu(299): error: identifier "tid" is undefined
+      for (int i = tid; i < n_blocks; i += blockDim.x) {
+                   ^
+
+src/gpu_kernels.cu(305): error: identifier "tid" is undefined
+      if (tid == 0) *total_energy = sum;
+          ^
+
+src/gpu_kernels.cu(347): error: class "t_species_gpu" has no member "np_max"
+      h_spec_temp.np_max = alloc_size;
+                  ^
+
+src/gpu_kernels.cu(389): error: class "gpu_context_t" has no member "num_species"
+      h_gpu_ctx.num_species = sim->n_species;
+                ^
+
+src/gpu_kernels.cu(463): error: class "gpu_context_t" has no member "num_species"
+          for (int i = 0; i < h_gpu_ctx.num_species; i++) {
+                                        ^
+
+src/gpu_kernels.cu(488): error: identifier "first_call_flags" is undefined
+      if (first_call_flags) {
+          ^
+
+src/gpu_kernels.cu(545): error: class "gpu_context_t" has no member "num_species"
+          first_call_flags = (int*)calloc(h_gpu_ctx.num_species, sizeof(int));
+                                                    ^
+
+11 errors detected in the compilation of "src/gpu_kernels.cu".
+make: *** [Makefile:38: build/gpu_kernels.o] Error 2

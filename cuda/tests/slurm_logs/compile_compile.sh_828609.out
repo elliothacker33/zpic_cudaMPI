@@ -1,0 +1,4 @@
+nvcc -c src/gpu_kernels.cu -arch=sm_80 -O3 -Wno-deprecated-gpu-targets --use_fast_math -lineinfo -std=c++11 -Xcompiler -Wall,-Wextra -Ilib -o build/gpu_kernels.o
+nvcc -o zpic_cuda build/main.o build/timer.o build/particles.o build/current.o build/simulation.o build/zdf.o build/emf.o build/zpic.o build/random.o build/input/movwindow.o build/input/twostream.o build/input/laser_particles.o build/input/beam.o build/input/magnetized.o build/input/density.o build/input/laser.o build/input/absorbing.o build/input/lwfa.o build/gpu_kernels.o -lm
+nvcc -o zpic_cuda build/main.o build/timer.o build/particles.o build/current.o build/simulation.o build/zdf.o build/emf.o build/zpic.o build/random.o build/input/movwindow.o build/input/twostream.o build/input/laser_particles.o build/input/beam.o build/input/magnetized.o build/input/density.o build/input/laser.o build/input/absorbing.o build/input/lwfa.o build/gpu_kernels.o -lm
+[DONE] Compilation complete. Executable: zpic

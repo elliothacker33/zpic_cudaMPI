@@ -1,0 +1,16 @@
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+In file included from src/particles.c:25:
+src/../lib/gpu_kernels.h:69:20: error: unknown type name ‘t_simulation’; did you mean ‘t_zdf_iteration’?
+ void alloc_gpu_ctx(t_simulation* sim);
+                    ^~~~~~~~~~~~
+                    t_zdf_iteration
+make: *** [Makefile:34: build/particles.o] Error 1
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+In file included from src/particles.c:25:
+src/../lib/gpu_kernels.h:69:20: error: unknown type name ‘t_simulation’; did you mean ‘t_zdf_iteration’?
+ void alloc_gpu_ctx(t_simulation* sim);
+                    ^~~~~~~~~~~~
+                    t_zdf_iteration
+make: *** [Makefile:34: build/particles.o] Error 1

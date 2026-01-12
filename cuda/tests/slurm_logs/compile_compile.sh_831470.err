@@ -1,0 +1,14 @@
+src/gpu_kernels.cu(545): warning #177-D: variable "shared_mem" was declared but never referenced
+      const int shared_mem = 3 * (256 + 4);
+                ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+src/gpu_kernels.cu(545): warning #177-D: variable "shared_mem" was declared but never referenced
+      const int shared_mem = 3 * (256 + 4);
+                ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).

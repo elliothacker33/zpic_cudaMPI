@@ -1,0 +1,26 @@
+CUDA error at src/gpu_kernels.cu:490: invalid argument
+Starting simulation ...
+
+n = 0, t = 0.0
+
+ Performance counter stats for './zpic':
+
+          1,507.74 msec task-clock                #    0.982 CPUs utilized          
+               105      context-switches          #    0.070 K/sec                  
+                 2      cpu-migrations            #    0.001 K/sec                  
+             3,828      page-faults               #    0.003 M/sec                  
+     5,087,455,370      cycles                    #    3.374 GHz                      (83.26%)
+     4,134,455,577      stalled-cycles-frontend   #   81.27% frontend cycles idle     (83.27%)
+       277,716,109      stalled-cycles-backend    #    5.46% backend cycles idle      (83.38%)
+     1,353,350,946      instructions              #    0.27  insn per cycle         
+                                                  #    3.05  stalled cycles per insn  (83.39%)
+       331,773,052      branches                  #  220.046 M/sec                    (83.36%)
+           705,309      branch-misses             #    0.21% of all branches          (83.33%)
+
+       1.535038633 seconds time elapsed
+
+       0.026755000 seconds user
+       1.467792000 seconds sys
+
+
+srun: error: gnx502: task 0: Exited with exit code 1

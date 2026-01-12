@@ -1,0 +1,3 @@
+nvcc -c src/gpu_kernels.cu -arch=sm_80 -O3 -Wno-deprecated-gpu-targets --use_fast_math -lineinfo -std=c++11 -Xcompiler -Wall,-Wextra -Ilib -o build/gpu_kernels.o
+nvcc -c src/gpu_kernels.cu -arch=sm_80 -O3 -Wno-deprecated-gpu-targets --use_fast_math -lineinfo -std=c++11 -Xcompiler -Wall,-Wextra -Ilib -o build/gpu_kernels.o
+[DONE] Compilation complete. Executable: zpic

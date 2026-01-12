@@ -1,0 +1,26 @@
+CUDA error at src/gpu_kernels.cu:476: an illegal memory access was encountered
+Starting simulation ...
+
+n = 0, t = 0.0
+
+ Performance counter stats for './zpic':
+
+          1,143.75 msec task-clock                #    0.974 CPUs utilized          
+               117      context-switches          #    0.102 K/sec                  
+                 0      cpu-migrations            #    0.000 K/sec                  
+             3,819      page-faults               #    0.003 M/sec                  
+     3,850,652,511      cycles                    #    3.367 GHz                      (83.35%)
+     2,213,572,326      stalled-cycles-frontend   #   57.49% frontend cycles idle     (83.43%)
+       833,707,430      stalled-cycles-backend    #   21.65% backend cycles idle      (83.32%)
+     3,217,087,145      instructions              #    0.84  insn per cycle         
+                                                  #    0.69  stalled cycles per insn  (83.42%)
+       652,725,095      branches                  #  570.686 M/sec                    (83.42%)
+           713,055      branch-misses             #    0.11% of all branches          (83.06%)
+
+       1.174329251 seconds time elapsed
+
+       0.302635000 seconds user
+       0.832922000 seconds sys
+
+
+srun: error: gnx502: task 0: Exited with exit code 1

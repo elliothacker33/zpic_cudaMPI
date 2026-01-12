@@ -1,0 +1,22 @@
+src/gpu_kernels.cu(229): warning #177-D: variable "block_start" was declared but never referenced
+              const int block_start = blockIdx.x * blockDim.x;
+                        ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+src/gpu_kernels.cu(532): warning #177-D: variable "shared_mem" was declared but never referenced
+      const int shared_mem = 3 * (512 + 4);
+                ^
+
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+src/gpu_kernels.cu(229): warning #177-D: variable "block_start" was declared but never referenced
+              const int block_start = blockIdx.x * blockDim.x;
+                        ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+src/gpu_kernels.cu(532): warning #177-D: variable "shared_mem" was declared but never referenced
+      const int shared_mem = 3 * (512 + 4);
+                ^
+
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).

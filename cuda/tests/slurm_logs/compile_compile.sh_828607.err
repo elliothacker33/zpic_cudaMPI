@@ -1,0 +1,14 @@
+src/gpu_kernels.cu:502:20: error: ‘void update_particles(int, t_species*, int)’ was declared ‘extern’ and later ‘static’ [-fpermissive]
+ static inline void update_particles(int species_idx, t_species* spec, int first_call) {
+                    ^~~~~~~~~~~~~~~~
+src/../lib/gpu_kernels.h:80:13: note: previous declaration of ‘void update_particles(int, t_species*, int)’
+ void update_particles(int species_idx, t_species* spec, int first_call);
+             ^~~~~~~~~~~~~~~~
+make: *** [Makefile:38: build/gpu_kernels.o] Error 1
+src/gpu_kernels.cu:502:20: error: ‘void update_particles(int, t_species*, int)’ was declared ‘extern’ and later ‘static’ [-fpermissive]
+ static inline void update_particles(int species_idx, t_species* spec, int first_call) {
+                    ^~~~~~~~~~~~~~~~
+src/../lib/gpu_kernels.h:80:13: note: previous declaration of ‘void update_particles(int, t_species*, int)’
+ void update_particles(int species_idx, t_species* spec, int first_call);
+             ^~~~~~~~~~~~~~~~
+make: *** [Makefile:38: build/gpu_kernels.o] Error 1

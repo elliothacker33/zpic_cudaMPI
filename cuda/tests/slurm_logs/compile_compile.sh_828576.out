@@ -1,0 +1,5 @@
+nvcc -c src/main.c -O3 -g -std=c++11 -Ilib -o build/main.o
+nvcc -c src/timer.c -O3 -g -std=c++11 -Ilib -o build/timer.o
+nvcc -c src/particles.c -O3 -g -std=c++11 -Ilib -o build/particles.o
+nvcc -c src/particles.c -O3 -g -std=c++11 -Ilib -o build/particles.o
+[DONE] Compilation complete. Executable: zpic

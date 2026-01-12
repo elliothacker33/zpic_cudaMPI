@@ -1,0 +1,114 @@
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+build/input/movwindow.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/movwindow.c:33: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/movwindow.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/movwindow.c:79: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/twostream.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/twostream.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/laser_particles.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/laser_particles.c:32: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/laser_particles.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/laser_particles.c:79: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/beam.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/beam.c:10: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/beam.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/beam.c:43: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/magnetized.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/magnetized.c:12: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/magnetized.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/magnetized.c:57: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/density.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/density.c:19: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/density.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/density.c:57: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/laser.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/laser.c:32: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/laser.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/laser.c:79: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/absorbing.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/absorbing.c:12: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/absorbing.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/absorbing.c:47: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/lwfa.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/lwfa.c:32: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/lwfa.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/lwfa.c:64: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+collect2: error: ld returned 1 exit status
+make: *** [Makefile:30: zpic_cuda] Error 1
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+build/input/movwindow.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/movwindow.c:33: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/movwindow.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/movwindow.c:79: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/twostream.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/twostream.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/laser_particles.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/laser_particles.c:32: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/laser_particles.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/laser_particles.c:79: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/beam.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/beam.c:10: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/beam.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/beam.c:43: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/magnetized.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/magnetized.c:12: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/magnetized.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/magnetized.c:57: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/density.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/density.c:19: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/density.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/density.c:57: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/laser.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/laser.c:32: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/laser.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/laser.c:79: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/absorbing.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/absorbing.c:12: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/absorbing.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/absorbing.c:47: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+build/input/lwfa.o: In function `sim_init':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/lwfa.c:32: multiple definition of `sim_init'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:15: first defined here
+build/input/lwfa.o: In function `sim_report':
+/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/lwfa.c:64: multiple definition of `sim_report'
+build/main.o:/home/uminhocp016/deucalion_lab/gpu_test/cuda/src/input/twostream.c:53: first defined here
+collect2: error: ld returned 1 exit status
+make: *** [Makefile:30: zpic_cuda] Error 1

@@ -1,0 +1,20 @@
+src/gpu_kernels.cu(231): error: identifier "bloc" is undefined
+              if (idx >= bloc)
+                         ^
+
+src/gpu_kernels.cu(249): error: identifier "block_energies" is undefined
+          block_energies[blockIdx.x] = energy_block;
+          ^
+
+2 errors detected in the compilation of "src/gpu_kernels.cu".
+make: *** [Makefile:39: build/gpu_kernels.o] Error 2
+src/gpu_kernels.cu(231): error: identifier "bloc" is undefined
+              if (idx >= bloc)
+                         ^
+
+src/gpu_kernels.cu(249): error: identifier "block_energies" is undefined
+          block_energies[blockIdx.x] = energy_block;
+          ^
+
+2 errors detected in the compilation of "src/gpu_kernels.cu".
+make: *** [Makefile:39: build/gpu_kernels.o] Error 2

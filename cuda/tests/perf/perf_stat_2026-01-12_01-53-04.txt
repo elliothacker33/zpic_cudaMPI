@@ -1,0 +1,35 @@
+
+Simulation ended.
+
+Starting simulation ...
+
+n = 0, t = 0.0
+Energy (fields | particles | total) = 2.443118e-10 4.977629e-01 4.977629e-01
+n = 501, t = 50.100002
+Energy (fields | particles | total) = 1.283848e-01 2.512201e+00 2.640586e+00
+Initial energy: 4.977629e-01, Final energy: 2.640586e+00
+
+Final energy different from Initial Energy. Change in total energy is: 81.15 % 
+ERROR: Large Change
+
+ Performance counter stats for './zpic':
+
+          1,122.09 msec task-clock                #    0.978 CPUs utilized          
+               112      context-switches          #    0.100 K/sec                  
+                 0      cpu-migrations            #    0.000 K/sec                  
+             3,812      page-faults               #    0.003 M/sec                  
+     3,733,041,285      cycles                    #    3.327 GHz                      (83.29%)
+     1,222,347,494      stalled-cycles-frontend   #   32.74% frontend cycles idle     (83.40%)
+     1,364,054,019      stalled-cycles-backend    #   36.54% backend cycles idle      (83.39%)
+     4,974,904,989      instructions              #    1.33  insn per cycle         
+                                                  #    0.27  stalled cycles per insn  (83.21%)
+       926,453,056      branches                  #  825.648 M/sec                    (83.28%)
+           992,689      branch-misses             #    0.11% of all branches          (83.43%)
+
+       1.147918640 seconds time elapsed
+
+       0.612768000 seconds user
+       0.501017000 seconds sys
+
+
+srun: error: gnx502: task 0: Exited with exit code 1

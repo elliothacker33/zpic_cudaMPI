@@ -1,0 +1,17 @@
+nvcc -c src/simulation.c -O3 -g -std=c++11 -Ilib -o build/simulation.o
+nvcc -c src/zdf.c -O3 -g -std=c++11 -Ilib -o build/zdf.o
+nvcc -c src/emf.c -O3 -g -std=c++11 -Ilib -o build/emf.o
+nvcc -c src/zpic.c -O3 -g -std=c++11 -Ilib -o build/zpic.o
+nvcc -c src/random.c -O3 -g -std=c++11 -Ilib -o build/random.o
+nvcc -c src/input/movwindow.c -O3 -g -std=c++11 -Ilib -o build/input/movwindow.o
+nvcc -c src/input/twostream.c -O3 -g -std=c++11 -Ilib -o build/input/twostream.o
+nvcc -c src/input/laser_particles.c -O3 -g -std=c++11 -Ilib -o build/input/laser_particles.o
+nvcc -c src/input/beam.c -O3 -g -std=c++11 -Ilib -o build/input/beam.o
+nvcc -c src/input/magnetized.c -O3 -g -std=c++11 -Ilib -o build/input/magnetized.o
+nvcc -c src/input/density.c -O3 -g -std=c++11 -Ilib -o build/input/density.o
+nvcc -c src/input/laser.c -O3 -g -std=c++11 -Ilib -o build/input/laser.o
+nvcc -c src/input/absorbing.c -O3 -g -std=c++11 -Ilib -o build/input/absorbing.o
+nvcc -c src/input/lwfa.c -O3 -g -std=c++11 -Ilib -o build/input/lwfa.o
+nvcc -c src/gpu_kernels.cu -arch=sm_80 -O3 -Wno-deprecated-gpu-targets --use_fast_math -lineinfo -std=c++11 -Xcompiler -Wall,-Wextra -Ilib -o build/gpu_kernels.o
+nvcc -c src/gpu_kernels.cu -arch=sm_80 -O3 -Wno-deprecated-gpu-targets --use_fast_math -lineinfo -std=c++11 -Xcompiler -Wall,-Wextra -Ilib -o build/gpu_kernels.o
+[DONE] Compilation complete. Executable: zpic

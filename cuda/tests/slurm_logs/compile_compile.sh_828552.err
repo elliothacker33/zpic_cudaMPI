@@ -1,0 +1,4 @@
+nvcc fatal   : 'fast': expected a number
+make: *** [Makefile:34: build/main.o] Error 1
+nvcc fatal   : 'fast': expected a number
+make: *** [Makefile:34: build/main.o] Error 1

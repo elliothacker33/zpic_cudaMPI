@@ -1,0 +1,4 @@
+nvcc fatal   : Unknown option '-Wall'
+make: *** [Makefile:34: build/main.o] Error 1
+nvcc fatal   : Unknown option '-Wall'
+make: *** [Makefile:34: build/main.o] Error 1
