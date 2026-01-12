@@ -1,0 +1,58 @@
+src/main.c: In function ‘main’:
+src/main.c:38:21: warning: passing argument 2 of ‘MPI_Init’ from incompatible pointer type [-Wincompatible-pointer-types]
+   38 |     MPI_Init(&argc, &argv);
+      |                     ^~~~~
+      |                     |
+      |                     const char ***
+In file included from src/main.c:23:
+/eb/aarch64/software/OpenMPI/5.0.3-GCC-13.3.0/include/mpi.h:1764:48: note: expected ‘char ***’ but argument is of type ‘const char ***’
+ 1764 | OMPI_DECLSPEC  int MPI_Init(int *argc, char ***argv);
+      |                                        ~~~~~~~~^~~~
+src/main.c:58:21: warning: unused variable ‘t1’ [-Wunused-variable]
+   58 |         uint64_t t0,t1;
+      |                     ^~
+src/main.c:58:18: warning: variable ‘t0’ set but not used [-Wunused-but-set-variable]
+   58 |         uint64_t t0,t1;
+      |                  ^~
+src/main.c:55:23: warning: unused variable ‘en_out’ [-Wunused-variable]
+   55 |         double en_in, en_out;
+      |                       ^~~~~~
+src/main.c:55:16: warning: unused variable ‘en_in’ [-Wunused-variable]
+   55 |         double en_in, en_out;
+      |                ^~~~~
+src/main.c:54:15: warning: unused variable ‘t’ [-Wunused-variable]
+   54 |         float t;
+      |               ^
+src/main.c:53:13: warning: unused variable ‘n’ [-Wunused-variable]
+   53 |         int n;
+      |             ^
+src/main.c:67:10: error: ‘n’ undeclared (first use in this function)
+   67 |     for (n=0,t=0.0; t<=sim.tmax; n++, t=n*sim.dt){
+      |          ^
+src/main.c:67:10: note: each undeclared identifier is reported only once for each function it appears in
+src/main.c:67:14: error: ‘t’ undeclared (first use in this function)
+   67 |     for (n=0,t=0.0; t<=sim.tmax; n++, t=n*sim.dt){
+      |              ^
+src/main.c:67:13: warning: left-hand operand of comma expression has no effect [-Wunused-value]
+   67 |     for (n=0,t=0.0; t<=sim.tmax; n++, t=n*sim.dt){
+      |             ^
+src/main.c:67:37: warning: left-hand operand of comma expression has no effect [-Wunused-value]
+   67 |     for (n=0,t=0.0; t<=sim.tmax; n++, t=n*sim.dt){
+      |                                     ^
+src/main.c:78:42: error: ‘en_in’ undeclared (first use in this function)
+   78 |             sim_report_energy_ret(&sim, &en_in);
+      |                                          ^~~~~
+src/main.c:88:9: error: ‘t1’ undeclared (first use in this function); did you mean ‘X1’?
+   88 |         t1 = timer_ticks();
+      |         ^~
+      |         X1
+src/main.c:91:38: error: ‘en_out’ undeclared (first use in this function)
+   91 |         sim_report_energy_ret(&sim, &en_out);
+      |                                      ^~~~~~
+src/main.c:98:27: error: ‘t0’ undeclared (first use in this function)
+   98 |         sim_timings(&sim, t0, t1);
+      |                           ^~
+src/main.c:41:9: warning: unused variable ‘size’ [-Wunused-variable]
+   41 |     int size;
+      |         ^~~~
+make: *** [Makefile:58: src/main.o] Error 1

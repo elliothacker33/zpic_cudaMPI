@@ -1,0 +1,14 @@
+[STARTING] Loading modules
+[LOAD_MODULE] GCC/13.3.0
+[LOAD_MODULE] LLVM/19
+ZPIC kernel will be run with 1 cores
+Running perf stat with 1 cores
+event syntax error: 'fp_spec,fp_dp_spec,fp_sp_spec'
+                             \___ parser error
+Run 'perf list' for a list of valid events
+
+ Usage: perf stat [<options>] [<command>]
+
+    -e, --event <event>   event selector. use 'perf list' to list available events
+srun: error: cna1086: task 0: Exited with exit code 129
+Perf stats saved to tests/perf/perf_stat_1_threads.txt

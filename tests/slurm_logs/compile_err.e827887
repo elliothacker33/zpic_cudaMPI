@@ -1,0 +1,10 @@
+/eb/aarch64/software/binutils/2.42-GCCcore-13.3.0/bin/ld: src/simulation.o: Relocations in generic ELF (EM: 62)
+/eb/aarch64/software/binutils/2.42-GCCcore-13.3.0/bin/ld: src/simulation.o: Relocations in generic ELF (EM: 62)
+/eb/aarch64/software/binutils/2.42-GCCcore-13.3.0/bin/ld: src/simulation.o: error adding symbols: file in wrong format
+collect2: error: ld returned 1 exit status
+make: *** [Makefile:52: zpic] Error 1
+/eb/aarch64/software/binutils/2.42-GCCcore-13.3.0/bin/ld: src/simulation.o: Relocations in generic ELF (EM: 62)
+/eb/aarch64/software/binutils/2.42-GCCcore-13.3.0/bin/ld: src/simulation.o: Relocations in generic ELF (EM: 62)
+/eb/aarch64/software/binutils/2.42-GCCcore-13.3.0/bin/ld: src/simulation.o: error adding symbols: file in wrong format
+collect2: error: ld returned 1 exit status
+make: *** [Makefile:52: zpic] Error 1
