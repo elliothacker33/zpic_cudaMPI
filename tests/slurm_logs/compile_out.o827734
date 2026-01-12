@@ -1,0 +1,14 @@
+[STARTING] Loading modules
+[LOAD_MODULE] GCC/13.3.0
+[LOAD_MODULE] LLVM/19
+[LOAD_MODULE] OpenMPI/5.0.3-GCC-13.3.0
+=====================================
+Compiling ZPIC using compiler: cc 
+rm -f zpic src/zdf.o src/current.o src/simulation.o src/particles.o src/main.o src/random.o src/zpic.o src/emf.o src/timer.o
+rm -rf docs
+cc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/zdf.c -o src/zdf.o
+cc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/current.c -o src/current.o
+cc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/simulation.c -o src/simulation.o
+cc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/particles.c -o src/particles.o
+cc -c -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp -Ilib src/main.c -o src/main.o
+[DONE] Compilation complete. Executable: zpic

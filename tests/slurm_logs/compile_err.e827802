@@ -1,0 +1,18 @@
+src/simulation.c: In function ‘sim_iter’:
+src/simulation.c:48:9: warning: implicit declaration of function ‘MPI_Comm_rank’ [-Wimplicit-function-declaration]
+   48 |         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      |         ^~~~~~~~~~~~~
+src/simulation.c:48:23: error: ‘MPI_COMM_WORLD’ undeclared (first use in this function)
+   48 |         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      |                       ^~~~~~~~~~~~~~
+src/simulation.c:48:23: note: each undeclared identifier is reported only once for each function it appears in
+make: *** [Makefile:58: src/simulation.o] Error 1
+src/simulation.c: In function ‘sim_iter’:
+src/simulation.c:48:9: warning: implicit declaration of function ‘MPI_Comm_rank’ [-Wimplicit-function-declaration]
+   48 |         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      |         ^~~~~~~~~~~~~
+src/simulation.c:48:23: error: ‘MPI_COMM_WORLD’ undeclared (first use in this function)
+   48 |         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      |                       ^~~~~~~~~~~~~~
+src/simulation.c:48:23: note: each undeclared identifier is reported only once for each function it appears in
+make: *** [Makefile:58: src/simulation.o] Error 1

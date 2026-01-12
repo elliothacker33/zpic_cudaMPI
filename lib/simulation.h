@@ -55,9 +55,8 @@ void sim_report( t_simulation* sim );
  * @brief Advance simulation 1 iteration
  * 
  * @param sim 	EM1D Simulation
- * @param rank  MPI rank
  */
-void sim_iter( t_simulation* sim, int rank );
+void sim_iter( t_simulation* sim );
 
 /**
  * @brief Print report on simulation energy (fields/particles/total)

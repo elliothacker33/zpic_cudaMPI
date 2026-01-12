@@ -32,10 +32,11 @@ done
 
 mkdir -p tests/slurm_logs
 
-make clean
-make Makefile
+# Force clean old object files (to avoid architecture mismatch)
+rm -f src/*.o zpic
+
+make Makefile CC=mpicc
 
 echo "[DONE] Compilation complete. Executable: zpic"
 
 exit 0
-

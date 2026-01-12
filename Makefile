@@ -32,7 +32,7 @@ CFLAGS ?= -O3 -ffast-math -march=native -std=c99 -pedantic -Wall -fopenmp
 
 LDFLAGS = -lm -fopenmp
 
-PHONY: all clean run docs Makefile run
+.PHONY: all clean run docs Makefile run
 
 SRC_DIR = src
 LIB_DIR = lib

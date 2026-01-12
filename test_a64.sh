@@ -28,7 +28,6 @@ echo "[STARTING] Loading modules"
 modules=(
     "GCC/13.3.0"
     "LLVM/19"
-    "OpenMPI/5.0.3-GCC-13.3.0"
 )
 
 ml purge
@@ -95,11 +94,90 @@ case $TEST_NAME in
     perf_stat)
         echo "Running perf stat with $CORES cores"
         mkdir -p tests/perf
-        PERF_DIR="tests/perf/perf_stat_${CORES}_threads.txt"
+        PERF_TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+        PERF_DIR="tests/perf/perf_stat_${CORES}_threads_${PERF_TIMESTAMP}.txt"
         export OMP_NUM_THREADS=$CORES
         export OMP_PLACES=cores
         export OMP_PROC_BIND=close
-        srun -c $CORES perf stat ./zpic 2>&1 | tee "$PERF_DIR"
+        
+        echo "=== ZPIC Perf Stats - ARM A64FX ===" | tee "$PERF_DIR"
+        echo "Threads: $CORES" | tee -a "$PERF_DIR"
+        echo "Date: $(date)" | tee -a "$PERF_DIR"
+        echo "" | tee -a "$PERF_DIR"
+        
+        # 1. FLOPs (Floating-Point Operations)
+        echo "┌─────────────────────────────────────────────────────────────────┐" | tee -a "$PERF_DIR"
+        echo "│ 1. FLOPs (Floating-Point Operations)                           │" | tee -a "$PERF_DIR"
+        echo "└─────────────────────────────────────────────────────────────────┘" | tee -a "$PERF_DIR"
+        srun -c $CORES perf stat -e fp_dp_fixed_ops_spec,fp_dp_scale_ops_spec \
+            ./zpic 2>&1 | tee -a "$PERF_DIR"
+        echo "" | tee -a "$PERF_DIR"
+        
+        # 2. Memory Traffic
+        echo "┌─────────────────────────────────────────────────────────────────┐" | tee -a "$PERF_DIR"
+        echo "│ 2. Memory Traffic (Cache Refills & Writebacks)                 │" | tee -a "$PERF_DIR"
+        echo "└─────────────────────────────────────────────────────────────────┘" | tee -a "$PERF_DIR"
+        srun -c $CORES perf stat -e l1d_cache_refill,l2d_cache_refill,l2d_cache_wb \
+            ./zpic 2>&1 | tee -a "$PERF_DIR"
+        echo "" | tee -a "$PERF_DIR"
+        
+        # 3. Execution Efficiency
+        echo "┌─────────────────────────────────────────────────────────────────┐" | tee -a "$PERF_DIR"
+        echo "│ 3. Execution Efficiency (Cycles & Instructions)                │" | tee -a "$PERF_DIR"
+        echo "└─────────────────────────────────────────────────────────────────┘" | tee -a "$PERF_DIR"
+        srun -c $CORES perf stat -e cycles,instructions,stalled-cycles-frontend,stalled-cycles-backend \
+            ./zpic 2>&1 | tee -a "$PERF_DIR"
+        echo "" | tee -a "$PERF_DIR"
+        
+        # 4. Complete run for GFLOPS calculation
+        echo "┌─────────────────────────────────────────────────────────────────┐" | tee -a "$PERF_DIR"
+        echo "│ 4. COMPLETE METRICS (All-in-One for GFLOPS)                    │" | tee -a "$PERF_DIR"
+        echo "└─────────────────────────────────────────────────────────────────┘" | tee -a "$PERF_DIR"
+        PERF_OUTPUT=$(srun -c $CORES perf stat -e task-clock,fp_dp_fixed_ops_spec,fp_dp_scale_ops_spec,cycles,instructions \
+            ./zpic 2>&1)
+        echo "$PERF_OUTPUT" | tee -a "$PERF_DIR"
+        
+        # Calculate GFLOPS
+        echo "" | tee -a "$PERF_DIR"
+        echo "=== GFLOPS Calculation ===" | tee -a "$PERF_DIR"
+        
+        FP_FIXED=$(echo "$PERF_OUTPUT" | grep "fp_dp_fixed_ops_spec" | awk '{print $1}' | tr -d ',')
+        FP_SCALE=$(echo "$PERF_OUTPUT" | grep "fp_dp_scale_ops_spec" | awk '{print $1}' | tr -d ',')
+        TIME_MS=$(echo "$PERF_OUTPUT" | grep "task-clock" | awk '{print $1}' | tr -d ',')
+        CYCLES=$(echo "$PERF_OUTPUT" | grep -w "cycles" | awk '{print $1}' | tr -d ',')
+        INSTR=$(echo "$PERF_OUTPUT" | grep "instructions" | awk '{print $1}' | tr -d ',')
+        
+        if [ -n "$FP_FIXED" ] && [ -n "$TIME_MS" ]; then
+            TOTAL_FLOPS=$((FP_FIXED + FP_SCALE))
+            TIME_SEC=$(echo "scale=6; $TIME_MS / 1000" | bc)
+            GFLOPS=$(echo "scale=4; $TOTAL_FLOPS / 1000000000" | bc)
+            GFLOPS_PER_SEC=$(echo "scale=4; $TOTAL_FLOPS / 1000000000 / $TIME_SEC" | bc)
+            
+            # CPI calculation
+            if [ -n "$INSTR" ] && [ "$INSTR" != "0" ]; then
+                CPI=$(echo "scale=2; $CYCLES / $INSTR" | bc)
+            else
+                CPI="N/A"
+            fi
+            
+            echo "FP Fixed Ops:     $FP_FIXED" | tee -a "$PERF_DIR"
+            echo "FP Scale Ops:     $FP_SCALE" | tee -a "$PERF_DIR"
+            echo "Total FP Ops:     $TOTAL_FLOPS" | tee -a "$PERF_DIR"
+            echo "Execution Time:   $TIME_SEC s" | tee -a "$PERF_DIR"
+            echo "Cycles:           $CYCLES" | tee -a "$PERF_DIR"
+            echo "Instructions:     $INSTR" | tee -a "$PERF_DIR"
+            echo "CPI:              $CPI" | tee -a "$PERF_DIR"
+            echo "" | tee -a "$PERF_DIR"
+            echo "═══════════════════════════════════════════════════════════════════" | tee -a "$PERF_DIR"
+            echo "GFLOPS (total):   $GFLOPS" | tee -a "$PERF_DIR"
+            echo "GFLOPS/s:         $GFLOPS_PER_SEC" | tee -a "$PERF_DIR"
+            echo "═══════════════════════════════════════════════════════════════════" | tee -a "$PERF_DIR"
+        else
+            echo "Warning: Could not extract FP operations from perf output" | tee -a "$PERF_DIR"
+            echo "Check 'perf list' for available events on this system" | tee -a "$PERF_DIR"
+        fi
+        
+        echo "" | tee -a "$PERF_DIR"
         echo "Perf stats saved to $PERF_DIR"
         ;;
 

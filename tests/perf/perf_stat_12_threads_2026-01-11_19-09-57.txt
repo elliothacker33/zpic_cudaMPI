@@ -1,0 +1,167 @@
+=== ZPIC Perf Stats - ARM A64FX ===
+Threads: 12
+Date: Sun 11 Jan 19:09:57 WET 2026
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. FLOPs (Floating-Point Operations)                           │
+└─────────────────────────────────────────────────────────────────┘
+
+Simulation ended.
+
+Time for spec. advance = 1.185339 s
+Time for emf   advance = 0.001187 s
+Total simulation time  = 1.186875 s
+
+Particle advance [nsec/part] = 19.716218 
+Particle advance [Mpart/sec] = 50.719668 
+Starting simulation ...
+
+n = 0, t = 0.0
+Allocating 12 threads
+Allocating 12 threads
+Energy (fields | particles | total) = 3.535198e-07 4.977628e-01 4.977632e-01
+n = 501, t = 50.100002
+Energy (fields | particles | total) = 2.474965e-02 4.751558e-01 4.999054e-01
+Initial energy: 4.977632e-01, Final energy: 4.999054e-01
+
+Final energy different from Initial Energy. Change in total energy is: 0.43 % 
+
+ Performance counter stats for './zpic':
+
+        69,172,684      fp_dp_fixed_ops_spec                                        
+             1,368      fp_dp_scale_ops_spec                                        
+
+       1.255988768 seconds time elapsed
+
+      14.283428000 seconds user
+       0.029944000 seconds sys
+
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. Memory Traffic (Cache Refills & Writebacks)                 │
+└─────────────────────────────────────────────────────────────────┘
+
+Simulation ended.
+
+Time for spec. advance = 1.184819 s
+Time for emf   advance = 0.001185 s
+Total simulation time  = 1.186355 s
+
+Particle advance [nsec/part] = 19.707568 
+Particle advance [Mpart/sec] = 50.741928 
+Starting simulation ...
+
+n = 0, t = 0.0
+Allocating 12 threads
+Allocating 12 threads
+Energy (fields | particles | total) = 3.535198e-07 4.977628e-01 4.977632e-01
+n = 501, t = 50.100002
+Energy (fields | particles | total) = 2.474965e-02 4.751558e-01 4.999054e-01
+Initial energy: 4.977632e-01, Final energy: 4.999054e-01
+
+Final energy different from Initial Energy. Change in total energy is: 0.43 % 
+
+ Performance counter stats for './zpic':
+
+       246,306,667      l1d_cache_refill                                            
+            32,530      l2d_cache_refill                                            
+            18,190      l2d_cache_wb                                                
+
+       1.245156414 seconds time elapsed
+
+      14.184246000 seconds user
+       0.118945000 seconds sys
+
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. Execution Efficiency (Cycles & Instructions)                │
+└─────────────────────────────────────────────────────────────────┘
+
+Simulation ended.
+
+Time for spec. advance = 1.183415 s
+Time for emf   advance = 0.001189 s
+Total simulation time  = 1.184950 s
+
+Particle advance [nsec/part] = 19.684215 
+Particle advance [Mpart/sec] = 50.802128 
+Starting simulation ...
+
+n = 0, t = 0.0
+Allocating 12 threads
+Allocating 12 threads
+Energy (fields | particles | total) = 3.535198e-07 4.977628e-01 4.977632e-01
+n = 501, t = 50.100002
+Energy (fields | particles | total) = 2.474965e-02 4.751558e-01 4.999054e-01
+Initial energy: 4.977632e-01, Final energy: 4.999054e-01
+
+Final energy different from Initial Energy. Change in total energy is: 0.43 % 
+
+ Performance counter stats for './zpic':
+
+    28,569,968,084      cycles                                                      
+    11,935,835,737      instructions              #    0.42  insn per cycle         
+                                                  #    1.81  stalled cycles per insn
+     2,068,197,283      stalled-cycles-frontend   #    7.24% frontend cycles idle   
+    21,611,522,537      stalled-cycles-backend    #   75.64% backend cycles idle    
+
+       1.246157724 seconds time elapsed
+
+      14.267233000 seconds user
+       0.019788000 seconds sys
+
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 4. COMPLETE METRICS (All-in-One for GFLOPS)                    │
+└─────────────────────────────────────────────────────────────────┘
+
+Simulation ended.
+
+Time for spec. advance = 1.184320 s
+Time for emf   advance = 0.001181 s
+Total simulation time  = 1.185853 s
+
+Particle advance [nsec/part] = 19.699268 
+Particle advance [Mpart/sec] = 50.763307 
+Starting simulation ...
+
+n = 0, t = 0.0
+Allocating 12 threads
+Allocating 12 threads
+Energy (fields | particles | total) = 3.535198e-07 4.977628e-01 4.977632e-01
+n = 501, t = 50.100002
+Energy (fields | particles | total) = 2.474965e-02 4.751558e-01 4.999054e-01
+Initial energy: 4.977632e-01, Final energy: 4.999054e-01
+
+Final energy different from Initial Energy. Change in total energy is: 0.43 % 
+
+ Performance counter stats for './zpic':
+
+         14,292.92 msec task-clock                #   11.482 CPUs utilized          
+        69,172,556      fp_dp_fixed_ops_spec      #    4.840 M/sec                  
+             1,368      fp_dp_scale_ops_spec      #    0.096 K/sec                  
+    28,584,662,913      cycles                    #    2.000 GHz                    
+    11,974,007,785      instructions              #    0.42  insn per cycle         
+
+       1.244831601 seconds time elapsed
+
+      14.254325000 seconds user
+       0.039900000 seconds sys
+
+=== GFLOPS Calculation ===
+FP Fixed Ops:     69172556
+FP Scale Ops:     1368
+Total FP Ops:     69173924
+Execution Time:   14.292920 s
+Cycles:           28584662913
+Instructions:     11974007785
+CPI:              2.38
+
+═══════════════════════════════════════════════════════════════════
+GFLOPS (total):   .0691
+GFLOPS/s:         .0048
+═══════════════════════════════════════════════════════════════════
+

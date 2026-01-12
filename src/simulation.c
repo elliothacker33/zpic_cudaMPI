@@ -10,7 +10,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpi.h>
 
 // ZPIC headers
 #include "../lib/simulation.h"
@@ -43,35 +42,20 @@ int report(int n, int ndump){
  * 
  * @param sim 	EM1D Simulation
  */
-void sim_iter(t_simulation* sim, int rank){
-
-	if (rank == 0){
-		// Advance particles and deposit current
-		current_zero(&sim -> current);
-	}
-
-	// Advance particles - ALL ranks must participate in spec_advance MPI calls
-	// n_species was broadcast in main, so all ranks have the correct count
-	for (int i = 0; i < sim->n_species; i++) {
-		// On rank 0, pass actual pointers; on other ranks, spec_advance handles it internally
-		if (rank == 0) {
-			spec_advance(&sim->species[i], &sim->emf, &sim->current);
-		} else {
-			// Non-rank-0: pass dummy pointers, spec_advance will broadcast what it needs
-			t_species dummy_spec = {0};
-			t_emf dummy_emf = {0};
-			t_current dummy_current = {0};
-			spec_advance(&dummy_spec, &dummy_emf, &dummy_current);
-		}
-	}
+void sim_iter(t_simulation* sim){
 	
-	if (rank == 0){
-		// Update current boundary conditions and advance iteration
-		current_update(&sim -> current);
+	// Advance particles and deposit current
+	current_zero(&sim -> current);
 
-		// Advance EM fields
-		emf_advance(&sim -> emf, &sim -> current);
-	}
+	// Advance particles
+	for (int i = 0; i<sim -> n_species; i++)
+		spec_advance(&sim -> species[i], &sim -> emf, &sim -> current);
+	
+	// Update current boundary conditions and advance iteration
+	current_update(&sim -> current);
+
+	// Advance EM fields
+	emf_advance(&sim -> emf, &sim -> current);
 }
 
 /**

@@ -30,6 +30,7 @@ void sim_init(t_simulation* sim){
 
 	// Use 1000 particles per cell
 	int ppc = 500;
+	printf("Particles per cell (ppc) = %d\n", ppc);
 
 	t_species* species = (t_species *) malloc(n_species * sizeof(t_species));
 

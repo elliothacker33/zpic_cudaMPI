@@ -1002,160 +1002,135 @@ int ltrim( float x )
  * 3. Move simulation window
  * 4. Sort particle buffer
  *
- * MPI Implementation:
- * - Broadcast E/B fields from rank 0 to all ranks
- * - Scatter particles among MPI ranks
- * - Each rank processes its local particles (with OpenMP)
- * - Gather updated particles back to rank 0
- * - Reduce current density and energy
- *
  * @param spec      Particle species
  * @param emf       EM fields
  * @param current   Current density
  */
 void spec_advance(t_species* spec, t_emf* emf, t_current* current){
     
-    // MPI setup
-    int rank, nprocs;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    
     uint64_t t0;
     t0 = timer_ticks();
 
-    // ========== 0. BROADCAST STRUCTURE PARAMETERS (rank 0 -> all) ==========
-    // These parameters are needed by all ranks before computation
-    float spec_dt, spec_m_q, spec_q, spec_dx;
-    int spec_nx, spec_np, spec_bc_type, spec_moving_window, spec_n_sort;
-    int current_nx, current_gc0, current_gc1;
-    int emf_nx, emf_gc0, emf_gc1;
-    
-    if (rank == 0) {
-        spec_dt = spec->dt;
-        spec_m_q = spec->m_q;
-        spec_q = spec->q;
-        spec_dx = spec->dx;
-        spec_nx = spec->nx;
-        spec_np = spec->np;
-        spec_bc_type = spec->bc_type;
-        spec_moving_window = spec->moving_window;
-        spec_n_sort = spec->n_sort;
-        current_nx = current->nx;
-        current_gc0 = current->gc[0];
-        current_gc1 = current->gc[1];
-        emf_nx = emf->nx;
-        emf_gc0 = emf->gc[0];
-        emf_gc1 = emf->gc[1];
+    const float tem   = 0.5 * spec->dt/spec -> m_q;
+    const float dt_dx = spec->dt / spec->dx;
+    const float qnx = spec -> q *  spec->dx / spec->dt;
+    const int nx0 = spec -> nx;
+    const int n_cells = current->nx;
+    double energy = 0;
+    int num_threads = omp_get_max_threads();
+
+    int mpi_rank = 0;
+    int mpi_size = 1;
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+    int total_np = spec->np;
+    MPI_Bcast(&total_np, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    spec->np = total_np;
+
+    const int base = (mpi_size > 0) ? total_np / mpi_size : total_np;
+    const int rem = (mpi_size > 0) ? total_np % mpi_size : 0;
+    const int local_np = base + ((mpi_rank < rem) ? 1 : 0);
+
+    int* counts = NULL;
+    int* displs = NULL;
+    if (mpi_rank == 0) {
+        counts = malloc(mpi_size * sizeof(int));
+        displs = malloc(mpi_size * sizeof(int));
+        int offset = 0;
+        for (int r = 0; r < mpi_size; r++) {
+            counts[r] = base + ((r < rem) ? 1 : 0);
+            displs[r] = offset;
+            offset += counts[r];
+        }
     }
-    
-    // Broadcast all parameters
-    MPI_Bcast(&spec_dt, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&spec_m_q, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&spec_q, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&spec_dx, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&spec_nx, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&spec_np, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&spec_bc_type, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&spec_moving_window, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&spec_n_sort, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&current_nx, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&current_gc0, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&current_gc1, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&emf_nx, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&emf_gc0, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&emf_gc1, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    // Now compute derived values using broadcast parameters
-    const float tem   = 0.5f * spec_dt / spec_m_q;
-    const float dt_dx = spec_dt / spec_dx;
-    const float qnx   = spec_q * spec_dx / spec_dt;
-    const int nx0     = spec_nx;
-    const float q     = spec_q;
+    int* local_ix = NULL;
+    float* local_x = NULL;
+    float* local_ux = NULL;
+    float* local_uy = NULL;
+    float* local_uz = NULL;
 
-    // Grid sizes including guard cells
-    const int current_size = current_nx + current_gc0 + current_gc1;
-    const int field_size   = emf_nx + emf_gc0 + emf_gc1;
-    const int gc0 = current_gc0;
-
-    // ========== 1. BROADCAST FIELDS (rank 0 -> all) ==========
-    // Non-rank-0 processes need to allocate field buffers
-    float *E_part_x, *E_part_y, *E_part_z;
-    float *B_part_x, *B_part_y, *B_part_z;
-    
-    if (rank == 0) {
-        E_part_x = emf->E_part_x;
-        E_part_y = emf->E_part_y;
-        E_part_z = emf->E_part_z;
-        B_part_x = emf->B_part_x;
-        B_part_y = emf->B_part_y;
-        B_part_z = emf->B_part_z;
-    } else {
-        E_part_x = (float*) malloc(field_size * sizeof(float));
-        E_part_y = (float*) malloc(field_size * sizeof(float));
-        E_part_z = (float*) malloc(field_size * sizeof(float));
-        B_part_x = (float*) malloc(field_size * sizeof(float));
-        B_part_y = (float*) malloc(field_size * sizeof(float));
-        B_part_z = (float*) malloc(field_size * sizeof(float));
+    if (local_np > 0) {
+        local_ix = malloc(local_np * sizeof(int));
+        local_x = malloc(local_np * sizeof(float));
+        local_ux = malloc(local_np * sizeof(float));
+        local_uy = malloc(local_np * sizeof(float));
+        local_uz = malloc(local_np * sizeof(float));
     }
-    
-    MPI_Bcast(E_part_x, field_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(E_part_y, field_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(E_part_z, field_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(B_part_x, field_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(B_part_y, field_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(B_part_z, field_size, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-    // ========== 2. SCATTER PARTICLES ==========
-    int total_np = spec_np;
-
-    // Calculate local particle count for each rank
-    int* sendcounts = (int*) malloc(nprocs * sizeof(int));
-    int* displs = (int*) malloc(nprocs * sizeof(int));
-    
-    for (int i = 0; i < nprocs; i++) {
-        sendcounts[i] = total_np / nprocs + (i < (total_np % nprocs) ? 1 : 0);
-        displs[i] = (i == 0) ? 0 : displs[i-1] + sendcounts[i-1];
-    }
-    
-    int local_np = sendcounts[rank];
-
-    // Allocate local particle buffers
-    int*   local_ix = (int*)   malloc(local_np * sizeof(int));
-    float* local_x  = (float*) malloc(local_np * sizeof(float));
-    float* local_ux = (float*) malloc(local_np * sizeof(float));
-    float* local_uy = (float*) malloc(local_np * sizeof(float));
-    float* local_uz = (float*) malloc(local_np * sizeof(float));
-
-    // Scatter particle data from rank 0
-    MPI_Scatterv(rank == 0 ? spec->part.ix : NULL, sendcounts, displs, MPI_INT,
+    MPI_Scatterv(mpi_rank == 0 ? spec->part.ix : NULL,
+                 mpi_rank == 0 ? counts : NULL,
+                 mpi_rank == 0 ? displs : NULL,
+                 MPI_INT,
                  local_ix, local_np, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(rank == 0 ? spec->part.x : NULL, sendcounts, displs, MPI_FLOAT,
+    MPI_Scatterv(mpi_rank == 0 ? spec->part.x : NULL,
+                 mpi_rank == 0 ? counts : NULL,
+                 mpi_rank == 0 ? displs : NULL,
+                 MPI_FLOAT,
                  local_x, local_np, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(rank == 0 ? spec->part.ux : NULL, sendcounts, displs, MPI_FLOAT,
+    MPI_Scatterv(mpi_rank == 0 ? spec->part.ux : NULL,
+                 mpi_rank == 0 ? counts : NULL,
+                 mpi_rank == 0 ? displs : NULL,
+                 MPI_FLOAT,
                  local_ux, local_np, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(rank == 0 ? spec->part.uy : NULL, sendcounts, displs, MPI_FLOAT,
+    MPI_Scatterv(mpi_rank == 0 ? spec->part.uy : NULL,
+                 mpi_rank == 0 ? counts : NULL,
+                 mpi_rank == 0 ? displs : NULL,
+                 MPI_FLOAT,
                  local_uy, local_np, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(rank == 0 ? spec->part.uz : NULL, sendcounts, displs, MPI_FLOAT,
+    MPI_Scatterv(mpi_rank == 0 ? spec->part.uz : NULL,
+                 mpi_rank == 0 ? counts : NULL,
+                 mpi_rank == 0 ? displs : NULL,
+                 MPI_FLOAT,
                  local_uz, local_np, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-    // ========== 3. LOCAL COMPUTATION ==========
-    // Allocate local current buffer (initialized to zero)
-    float* J_local_x = (float*) calloc(current_size, sizeof(float));
-    float* J_local_y = (float*) calloc(current_size, sizeof(float));
-    float* J_local_z = (float*) calloc(current_size, sizeof(float));
+    int* restrict const part_ix = local_ix;
+    float* restrict const part_x = local_x;
+    float* restrict const part_ux = local_ux;
+    float* restrict const part_uy = local_uy;
+    float* restrict const part_uz = local_uz;
+    float* restrict const E_part_x = emf -> E_part_x;
+    float* restrict const E_part_y = emf -> E_part_y;
+    float* restrict const E_part_z = emf -> E_part_z;
+    float* restrict const B_part_x = emf -> B_part_x;
+    float* restrict const B_part_y = emf -> B_part_y;
+    float* restrict const B_part_z = emf -> B_part_z;
 
-    double local_energy = 0.0;
+    // Grid size including guard cells
+    const int current_size = current->nx + current->gc[0] + current->gc[1];
+    float* J_species_x = calloc(n_cells, sizeof(float));
+    float* J_species_y = calloc(n_cells, sizeof(float));
+    float* J_species_z = calloc(n_cells, sizeof(float));
+    if (!J_species_x || !J_species_y || !J_species_z) {
+        fprintf(stderr, "(*error*) could not allocate J_species buffers\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
 
-    // Main particle loop with OpenMP (hybrid MPI+OpenMP)
-    #pragma omp parallel reduction(+:local_energy)
+    // Initialize locals if first time
+    if (spec->is_init == 0) {
+        printf("Allocating %d threads\n", num_threads);
+        spec->is_init = 1;
+        for (int i = 0; i < num_threads; i++) {
+            alloc_float3Buffer(&spec->J_local_per_thread[i], current_size);
+        }
+    }
+
+
+    #pragma omp parallel reduction(+:energy)
     {
-        // Thread-local current buffers for OpenMP
-        float* J_thread_x = (float*) calloc(current_size, sizeof(float));
-        float* J_thread_y = (float*) calloc(current_size, sizeof(float));
-        float* J_thread_z = (float*) calloc(current_size, sizeof(float));
+        int tid = omp_get_thread_num();
+        float* restrict const J_local_x = spec->J_local_per_thread[tid].x;
+        float* restrict const J_local_y = spec->J_local_per_thread[tid].y;
+        float* restrict const J_local_z = spec->J_local_per_thread[tid].z;
+
+        mem_set_float3Buffer(&spec->J_local_per_thread[tid], current_size, 0.0f);
+        double energy_local = 0;
 
         #pragma omp for
-        for (int i = 0; i < local_np; i++) {
+        for (int i=0; i < local_np; i++) {
+
             float3 Ep, Bp;
             float utx, uty, utz;
             float ux, uy, uz, u2;
@@ -1164,26 +1139,29 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
             int di;
             float dx;
 
-            ux = local_ux[i];
-            uy = local_uy[i];
-            uz = local_uz[i];
+            ux = part_ux[i];
+            uy = part_uy[i];
+            uz = part_uz[i];
 
-            int iz = local_ix[i];
-            float w1 = local_x[i];
-            int ih = (w1 < 0.5f) ? -1 : 0;
-            float w1h = w1 + ((w1 < 0.5f) ? 0.5f : -0.5f);
+            int iz, ih;
+            float w1, w1h;
+
+            iz = part_ix[i];
+
+            w1 = part_x[i];
+            ih = (w1 <0.5f)? -1 : 0;
+            w1h = w1 + ((w1 <0.5f)?0.5f:-0.5f);
+
             ih += iz;
 
-            // Interpolate fields
-            Ep.x = E_part_x[ih] * (1.0f - w1h) + E_part_x[ih+1] * w1h;
-            Ep.y = E_part_y[iz] * (1.0f - w1)  + E_part_y[iz+1] * w1;
-            Ep.z = E_part_z[iz] * (1.0f - w1)  + E_part_z[iz+1] * w1;
+            Ep.x = E_part_x[ih] * (1.0f - w1h) + E_part_x[ih+1]* w1h;
+            Ep.y = E_part_y[iz] * (1.0f -  w1) + E_part_y[iz+1] * w1;
+            Ep.z = E_part_z[iz] * (1.0f -  w1) + E_part_z[iz+1] * w1;
 
-            Bp.x = B_part_x[iz] * (1.0f - w1)  + B_part_x[iz+1] * w1;
+            Bp.x = B_part_x[iz] * (1.0f  - w1) + B_part_x[iz+1] * w1;
             Bp.y = B_part_y[ih] * (1.0f - w1h) + B_part_y[ih+1] * w1h;
             Bp.z = B_part_z[ih] * (1.0f - w1h) + B_part_z[ih+1] * w1h;
 
-            // Boris pusher - first half E-field kick
             Ep.x *= tem;
             Ep.y *= tem;
             Ep.z *= tem;
@@ -1192,18 +1170,18 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
             uty = uy + Ep.y;
             utz = uz + Ep.z;
 
-            // Energy calculation (time-centered)
             u2 = utx*utx + uty*uty + utz*utz;
             gamma = sqrtf(1 + u2);
-            local_energy += u2 / (1 + gamma);
 
-            // Boris rotation
+            energy_local += u2 / ( 1 + gamma );
+
             gtem = tem / gamma;
+
             Bp.x *= gtem;
             Bp.y *= gtem;
             Bp.z *= gtem;
 
-            otsq = 2.0f / (1.0f + Bp.x*Bp.x + Bp.y*Bp.y + Bp.z*Bp.z);
+            otsq = 2.0f / ( 1.0f + Bp.x*Bp.x + Bp.y*Bp.y + Bp.z*Bp.z );
 
             ux = utx + uty*Bp.z - utz*Bp.y;
             uy = uty + utz*Bp.x - utx*Bp.z;
@@ -1217,29 +1195,26 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
             uty += uz*Bp.x - ux*Bp.z;
             utz += ux*Bp.y - uy*Bp.x;
 
-            // Second half E-field kick
             ux = utx + Ep.x;
             uy = uty + Ep.y;
             uz = utz + Ep.z;
 
-            // Store updated velocities
-            local_ux[i] = ux;
-            local_uy[i] = uy;
-            local_uz[i] = uz;
+            part_ux[i] = ux;
+            part_uy[i] = uy;
+            part_uz[i] = uz;
 
-            // Position advance
             rg = 1.0f / sqrtf(1.0f + ux*ux + uy*uy + uz*uz);
             dx = dt_dx * rg * ux;
-            x1 = local_x[i] + dx;
+            x1 = part_x[i] + dx;
             di = ltrim(x1);
             x1 -= di;
 
-            // Current deposition
-            float qvy = q * uy * rg;
-            float qvz = q * uz * rg;
+            float qvy = spec->q * uy * rg;
+            float qvz = spec->q * uz * rg;
 
-            int ix0 = local_ix[i];
-            float x0 = local_x[i];
+            // Deposit in LOCAL buffer (inline of dep_current_zamb)
+            int ix0 = part_ix[i];
+            float x0 = part_x[i];
 
             typedef struct { float x0, x1, dx, qvy, qvz; int ix; } t_vp;
             t_vp vp[3];
@@ -1247,31 +1222,31 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
 
             vp[0].x0 = x0;
             vp[0].dx = dx;
-            vp[0].x1 = x0 + dx;
-            vp[0].qvy = qvy / 2.0f;
-            vp[0].qvz = qvz / 2.0f;
+            vp[0].x1 = x0+dx;
+            vp[0].qvy = qvy/2.0;
+            vp[0].qvz = qvz/2.0;
             vp[0].ix = ix0;
 
-            if (di != 0) {
-                int ib = (di == 1);
-                float delta = (x0 + dx - ib) / dx;
+            if ( di != 0 ) {
+                int ib = ( di == 1 );
+                float delta = (x0+dx-ib)/dx;
 
-                vp[1].x0 = 1 - ib;
+                vp[1].x0 = 1-ib;
                 vp[1].x1 = (x0 + dx) - di;
-                vp[1].dx = dx * delta;
+                vp[1].dx = dx*delta;
                 vp[1].ix = ix0 + di;
-                vp[1].qvy = vp[0].qvy * delta;
-                vp[1].qvz = vp[0].qvz * delta;
+                vp[1].qvy = vp[0].qvy*delta;
+                vp[1].qvz = vp[0].qvz*delta;
 
                 vp[0].x1 = ib;
-                vp[0].dx *= (1.0f - delta);
-                vp[0].qvy *= (1.0f - delta);
-                vp[0].qvz *= (1.0f - delta);
+                vp[0].dx *= (1.0f-delta);
+                vp[0].qvy *= (1.0f-delta);
+                vp[0].qvz *= (1.0f-delta);
 
                 vnp++;
             }
 
-            // Deposit current in thread-local buffer
+            // Deposit in LOCAL buffers
             for (int k = 0; k < vnp; k++) {
                 float S0x[2], S1x[2];
                 S0x[0] = 1.0f - vp[k].x0;
@@ -1279,126 +1254,173 @@ void spec_advance(t_species* spec, t_emf* emf, t_current* current){
                 S1x[0] = 1.0f - vp[k].x1;
                 S1x[1] = vp[k].x1;
 
-                int idx = vp[k].ix + gc0;
-                J_thread_x[idx] += qnx * vp[k].dx;
-                J_thread_y[idx] += vp[k].qvy * (S0x[0] + S1x[0] + (S0x[0] - S1x[0]) / 2.0f);
-                J_thread_y[idx + 1] += vp[k].qvy * (S0x[1] + S1x[1] + (S0x[1] - S1x[1]) / 2.0f);
-                J_thread_z[idx] += vp[k].qvz * (S0x[0] + S1x[0] + (S0x[0] - S1x[0]) / 2.0f);
-                J_thread_z[idx + 1] += vp[k].qvz * (S0x[1] + S1x[1] + (S0x[1] - S1x[1]) / 2.0f);
+                int idx = vp[k].ix + current->gc[0]; // offset para guard cells
+                J_local_x[idx] += qnx * vp[k].dx;
+                J_local_y[idx] += vp[k].qvy * (S0x[0]+S1x[0]+(S0x[0]-S1x[0])/2.0f);
+                J_local_y[idx + 1] += vp[k].qvy * (S0x[1]+S1x[1]+(S0x[1]-S1x[1])/2.0f);
+                J_local_z[idx] += vp[k].qvz * (S0x[0]+S1x[0]+(S0x[0]-S1x[0])/2.0f);
+                J_local_z[idx + 1] += vp[k].qvz * (S0x[1]+S1x[1]+(S0x[1]-S1x[1])/2.0f);
             }
 
-            // Update position
-            local_x[i] = x1;
-            local_ix[i] += di;
+            part_x[i] = x1;
+            part_ix[i] += di;
         }
 
-        // Merge thread-local currents into rank-local current
-        #pragma omp critical
-        {
-            for (int j = 0; j < current_size; j++) {
-                J_local_x[j] += J_thread_x[j];
-                J_local_y[j] += J_thread_y[j];
-                J_local_z[j] += J_thread_z[j];
+
+    const int gc0 = current->gc[0];
+    int block_size = 256;
+
+    float* restrict const J_0x = J_species_x;
+    float* restrict const J_0y = J_species_y;
+    float* restrict const J_0z = J_species_z;
+
+    #pragma omp for nowait
+    for (int block = 0; block < n_cells; block += block_size) {
+        const int block_end = (block + block_size < n_cells) ? block + block_size : n_cells;
+        for (int t = 0; t < num_threads; t++) {
+	    const float* restrict const J_total_x = spec->J_local_per_thread[t].x;
+	    const float* restrict const J_total_y = spec->J_local_per_thread[t].y;
+        const float* restrict const J_total_z = spec->J_local_per_thread[t].z;
+            for (int j = block; j < block_end; j++){
+                const int idx_local = gc0 + j;
+                J_0x[j] += J_total_x[idx_local];
+                J_0y[j] += J_total_y[idx_local];
+                J_0z[j] += J_total_z[idx_local];
             }
         }
-
-        free(J_thread_x);
-        free(J_thread_y);
-        free(J_thread_z);
+    }
+        energy += energy_local;
     }
 
-    // ========== 4. GATHER PARTICLES BACK TO RANK 0 ==========
     MPI_Gatherv(local_ix, local_np, MPI_INT,
-                rank == 0 ? spec->part.ix : NULL, sendcounts, displs, MPI_INT, 0, MPI_COMM_WORLD);
+                mpi_rank == 0 ? spec->part.ix : NULL,
+                mpi_rank == 0 ? counts : NULL,
+                mpi_rank == 0 ? displs : NULL,
+                MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Gatherv(local_x, local_np, MPI_FLOAT,
-                rank == 0 ? spec->part.x : NULL, sendcounts, displs, MPI_FLOAT, 0, MPI_COMM_WORLD);
+                mpi_rank == 0 ? spec->part.x : NULL,
+                mpi_rank == 0 ? counts : NULL,
+                mpi_rank == 0 ? displs : NULL,
+                MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gatherv(local_ux, local_np, MPI_FLOAT,
-                rank == 0 ? spec->part.ux : NULL, sendcounts, displs, MPI_FLOAT, 0, MPI_COMM_WORLD);
+                mpi_rank == 0 ? spec->part.ux : NULL,
+                mpi_rank == 0 ? counts : NULL,
+                mpi_rank == 0 ? displs : NULL,
+                MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gatherv(local_uy, local_np, MPI_FLOAT,
-                rank == 0 ? spec->part.uy : NULL, sendcounts, displs, MPI_FLOAT, 0, MPI_COMM_WORLD);
+                mpi_rank == 0 ? spec->part.uy : NULL,
+                mpi_rank == 0 ? counts : NULL,
+                mpi_rank == 0 ? displs : NULL,
+                MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Gatherv(local_uz, local_np, MPI_FLOAT,
-                rank == 0 ? spec->part.uz : NULL, sendcounts, displs, MPI_FLOAT, 0, MPI_COMM_WORLD);
+                mpi_rank == 0 ? spec->part.uz : NULL,
+                mpi_rank == 0 ? counts : NULL,
+                mpi_rank == 0 ? displs : NULL,
+                MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-    // ========== 5. REDUCE CURRENT (sum all rank contributions) ==========
-    if (rank == 0) {
-        MPI_Reduce(MPI_IN_PLACE, J_local_x, current_size, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(MPI_IN_PLACE, J_local_y, current_size, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(MPI_IN_PLACE, J_local_z, current_size, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-        
-        // Add to global current (only on rank 0)
-        for (int j = 0; j < current_nx; j++) {
-            current->J_0x[j] += J_local_x[gc0 + j];
-            current->J_0y[j] += J_local_y[gc0 + j];
-            current->J_0z[j] += J_local_z[gc0 + j];
-        }
-    } else {
-        MPI_Reduce(J_local_x, NULL, current_size, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(J_local_y, NULL, current_size, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(J_local_z, NULL, current_size, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-    }
-
-    // ========== 6. REDUCE ENERGY ==========
-    double total_energy = 0.0;
-    MPI_Reduce(&local_energy, &total_energy, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    // ========== CLEANUP LOCAL BUFFERS ==========
     free(local_ix);
     free(local_x);
     free(local_ux);
     free(local_uy);
     free(local_uz);
-    free(J_local_x);
-    free(J_local_y);
-    free(J_local_z);
-    free(sendcounts);
-    free(displs);
-    
-    // Free field buffers allocated by non-rank-0 processes
-    if (rank != 0) {
-        free(E_part_x);
-        free(E_part_y);
-        free(E_part_z);
-        free(B_part_x);
-        free(B_part_y);
-        free(B_part_z);
+
+    if (mpi_rank == 0) {
+        free(counts);
+        free(displs);
     }
 
-    // ========== RANK 0 ONLY: FINALIZATION ==========
-    if (rank == 0) {
-        spec->energy = spec->q * spec->m_q * total_energy * spec->dx;
+    double energy_rank = energy;
+    double energy_total = 0.0;
+    MPI_Reduce(&energy_rank, &energy_total, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    float* J_sum_x = NULL;
+    float* J_sum_y = NULL;
+    float* J_sum_z = NULL;
+    if (mpi_rank == 0) {
+        J_sum_x = malloc((size_t)n_cells * sizeof(float));
+        J_sum_y = malloc((size_t)n_cells * sizeof(float));
+        J_sum_z = malloc((size_t)n_cells * sizeof(float));
+    }
+
+    MPI_Reduce(J_species_x, J_sum_x, n_cells, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(J_species_y, J_sum_y, n_cells, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(J_species_z, J_sum_z, n_cells, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    free(J_species_x);
+    free(J_species_y);
+    free(J_species_z);
+
+    if (mpi_rank == 0) {
+        for (int j = 0; j < n_cells; j++) {
+            current->J_0x[j] += J_sum_x[j];
+            current->J_0y[j] += J_sum_y[j];
+            current->J_0z[j] += J_sum_z[j];
+        }
+
+        spec->energy = spec->q * spec->m_q * energy_total * spec->dx;
         spec->iter += 1;
 
-        // Boundary conditions
-        if (spec->moving_window || spec->bc_type == PART_BC_OPEN) {
-            if (spec->moving_window) spec_move_window(spec);
-            int i = 0;
-            while (i < spec->np) {
-                if ((spec->part.ix[i] < 0) || (spec->part.ix[i] >= nx0)) {
-                    spec->part.ix[i] = spec->part.ix[--spec->np];
-                    spec->part.x[i] = spec->part.x[spec->np];
-                    spec->part.ux[i] = spec->part.ux[spec->np];
-                    spec->part.uy[i] = spec->part.uy[spec->np];
-                    spec->part.uz[i] = spec->part.uz[spec->np];
+        // Boundary conditions (serial)
+        if (spec -> moving_window || spec -> bc_type == PART_BC_OPEN){
+            if (spec -> moving_window ) spec_move_window( spec );
+	        int i = 0;
+
+            while (i < spec -> np) {
+                if (( spec -> part.ix[i] < 0 ) || ( spec -> part.ix[i] >= nx0 )) {
+                    spec -> part.ix[i] = spec -> part.ix[ -- spec -> np ];
+                    spec -> part.x[i] = spec -> part.x[ --spec -> np ];
+                    spec -> part.ux[i] = spec -> part.ux[ --spec -> np ];
+                    spec -> part.uy[i] = spec -> part.uy[ --spec -> np ];
+                    spec -> part.uz[i] = spec -> part.uz[ --spec -> np ];
                     continue;
                 }
                 i++;
             }
+
         } else {
             #pragma omp parallel for
-            for (int i = 0; i < spec->np; i++) {
-                spec->part.ix[i] += ((spec->part.ix[i] < 0) ? nx0 : 0) -
-                                    ((spec->part.ix[i] >= nx0) ? nx0 : 0);
+	        for (int i=0; i<spec->np; i++) {
+                spec-> part.ix[i] += (( spec -> part.ix[i] < 0 ) ? nx0 : 0 ) -
+                                     (( spec -> part.ix[i] >= nx0 ) ? nx0 : 0);
             }
         }
 
-        // Sorting
-        if (spec->n_sort > 0) {
-            if (!(spec->iter % spec->n_sort)) spec_sort(spec);
+
+        if ( spec -> n_sort > 0 ) {
+            if ( ! (spec -> iter % spec -> n_sort) ) spec_sort( spec );
         }
 
-        _spec_npush += spec->np;
-        _spec_time += timer_interval_seconds(t0, timer_ticks());
+        _spec_npush += spec -> np;
+        _spec_time += timer_interval_seconds( t0, timer_ticks() );
     }
+
+    if (mpi_rank == 0) {
+        free(J_sum_x);
+        free(J_sum_y);
+        free(J_sum_z);
+    }
+
+    MPI_Bcast(&spec->iter, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&spec->n_move, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&spec->np, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&spec->energy, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    if (spec->np > spec->np_max) {
+        spec_grow_buffer(spec, spec->np);
+    }
+
+    MPI_Bcast(spec->part.ix, spec->np, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(spec->part.x, spec->np, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(spec->part.ux, spec->np, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(spec->part.uy, spec->np, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(spec->part.uz, spec->np, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+    MPI_Bcast(current->J_0x, n_cells, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(current->J_0y, n_cells, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(current->J_0z, n_cells, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+    MPI_Bcast(&_spec_npush, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&_spec_time, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
 /*********************************************************************************************
